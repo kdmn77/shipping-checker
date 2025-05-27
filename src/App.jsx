@@ -4,9 +4,8 @@ import sagawaData from './sagawaData.json';
 
 const sizes = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
 
-// 地域分けとカラー
 const regionColors = {
-  北海道: '#2196f3',
+  北海道: '#999',
   東北: '#2196f3',
   関東: '#ffeb3b',
   中部: '#4caf50',
@@ -60,18 +59,19 @@ export default function App() {
     compare(p, size);
   };
 
-const getColor = (pref) => {
-  if (pref === '東京') return '#e53935'; // 東京だけ赤
-  for (const region in regionMap) {
-    if (regionMap[region].includes(pref)) {
-      return regionColors[region];
+  const getColor = (pref) => {
+    if (pref === '東京') return '#e53935';
+    if (pref === '大阪') return '#1976d2';
+    for (const region in regionMap) {
+      if (regionMap[region].includes(pref)) {
+        return regionColors[region];
+      }
     }
-  }
-  return '#ccc';
-};
+    return '#ccc';
+  };
 
   return (
-    <div style={{ padding: 20, maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: 10, maxWidth: 420, margin: '0 auto' }}>
       <h1>送料比較ツール</h1>
 
       <p>サイズを選んでください：</p>
@@ -86,7 +86,7 @@ const getColor = (pref) => {
               background: s === size ? '#0070f3' : '#eee',
               color: s === size ? 'white' : 'black',
               border: 'none',
-              borderRadius: 5,
+              borderRadius: 4,
               fontSize: 14
             }}
           >
@@ -102,13 +102,13 @@ const getColor = (pref) => {
             key={p}
             onClick={() => handlePrefectureClick(p)}
             style={{
-              margin: 4,
-              padding: 8,
-              minWidth: 60,
+              margin: 2,
+              padding: '6px 8px',
+              minWidth: 48,
               background: getColor(p),
               color: p === prefecture ? '#fff' : '#000',
               border: p === prefecture ? '2px solid #000' : 'none',
-              borderRadius: 5,
+              borderRadius: 4,
               fontSize: 12
             }}
           >
@@ -117,27 +117,27 @@ const getColor = (pref) => {
         ))}
       </div>
 
-{result && (
-  <div style={{ background: '#f0f0f0', padding: 10 }}>
-    <p style={{ fontSize: '20px', fontWeight: 'bold' }}>
-      最安: {result.cheapest}
-      {result.cheapest !== '同額' && (
-        <>
-          {result.cheapest === 'ヤマト' && result.yamato !== undefined && (
-            <>（{result.yamato.toLocaleString()}円）</>
-          )}
-          {result.cheapest === '佐川' && result.sagawa !== undefined && (
-            <>（{result.sagawa.toLocaleString()}円）</>
-          )}
-        </>
+      {result && (
+        <div style={{ background: '#f0f0f0', padding: 10 }}>
+          <p style={{ fontSize: '20px', fontWeight: 'bold' }}>
+            最安: {result.cheapest}
+            {result.cheapest !== '同額' && (
+              <>
+                {result.cheapest === 'ヤマト' && result.yamato !== undefined && (
+                  <>（{result.yamato.toLocaleString()}円）</>
+                )}
+                {result.cheapest === '佐川' && result.sagawa !== undefined && (
+                  <>（{result.sagawa.toLocaleString()}円）</>
+                )}
+              </>
+            )}
+          </p>
+          <p>サイズ: {result.size}</p>
+          {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
+          {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
+          <p>配送先: {result.prefecture}</p>
+        </div>
       )}
-    </p>
-    <p>サイズ: {result.size}</p>
-    {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
-    {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
-    <p>配送先: {result.prefecture}</p>
-  </div>
-)}
     </div>
   );
 }
