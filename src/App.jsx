@@ -10,33 +10,63 @@ export default function App() {
   const [prefecture, setPrefecture] = useState('東京');
   const [result, setResult] = useState(null);
 
-  const compare = () => {
-    const yamato = yamatoData[size]?.[prefecture];
-    const sagawa = sagawaData[size]?.[prefecture];
+  const compare = (newPrefecture = prefecture, newSize = size) => {
+    const yamato = yamatoData[newSize]?.[newPrefecture];
+    const sagawa = sagawaData[newSize]?.[newPrefecture];
 
-    if (yamato == null || sagawa == null) {
-      setResult({ error: 'データが見つかりません' });
-      return;
+    if (yamato == null && sagawa == null) {
+      setResult(null);
+    } else {
+      const cheapest =
+        yamato == null ? '佐川' :
+        sagawa == null ? 'ヤマト' :
+        yamato < sagawa ? 'ヤマト' :
+        sagawa < yamato ? '佐川' : '同額';
+      setResult({ size: newSize, prefecture: newPrefecture, yamato, sagawa, cheapest });
     }
+  };
 
-    const cheapest = yamato < sagawa ? 'ヤマト' : sagawa < yamato ? '佐川' : '同額';
-    setResult({ size, prefecture, yamato, sagawa, cheapest });
+  const handleSizeClick = (s) => {
+    setSize(s);
+    compare(prefecture, s);
+  };
+
+  const handlePrefectureClick = (p) => {
+    setPrefecture(p);
+    compare(p, size);
   };
 
   return (
     <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
       <h1>送料比較ツール</h1>
-      <label>サイズ</label>
-      <select value={size} onChange={(e) => setSize(Number(e.target.value))} style={{ width: '100%', marginBottom: 10 }}>
-        {sizes.map(s => <option key={s} value={s}>{s} サイズ</option>)}
-      </select>
 
-      <label>都道府県（クリックで選択）</label>
+      <p>サイズを選んでください：</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 10 }}>
+        {sizes.map(s => (
+          <button
+            key={s}
+            onClick={() => handleSizeClick(s)}
+            style={{
+              margin: 4,
+              padding: 8,
+              background: s === size ? '#0070f3' : '#eee',
+              color: s === size ? 'white' : 'black',
+              border: 'none',
+              borderRadius: 5,
+              fontSize: 14
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <p>都道府県を選んでください：</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 10 }}>
         {allPrefectures.map(p => (
           <button
             key={p}
-            onClick={() => setPrefecture(p)}
+            onClick={() => handlePrefectureClick(p)}
             style={{
               margin: 4,
               padding: 8,
@@ -53,21 +83,13 @@ export default function App() {
         ))}
       </div>
 
-      <button onClick={compare} style={{ width: '100%', marginBottom: 10 }}>比較する</button>
-
       {result && (
         <div style={{ background: '#f0f0f0', padding: 10 }}>
-          {result.error ? (
-            <p style={{ color: 'red' }}>{result.error}</p>
-          ) : (
-            <>
-              <p>サイズ: {result.size}</p>
-              <p>配送先: {result.prefecture}</p>
-              <p>ヤマト: {result.yamato.toLocaleString()}円</p>
-              <p>佐川: {result.sagawa.toLocaleString()}円</p>
-              <p><strong>最安: {result.cheapest}</strong></p>
-            </>
-          )}
+          <p>サイズ: {result.size}</p>
+          <p>配送先: {result.prefecture}</p>
+          {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
+          {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
+          <p><strong>最安: {result.cheapest}</strong></p>
         </div>
       )}
     </div>
