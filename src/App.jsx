@@ -5,7 +5,7 @@ import sagawaData from './sagawaData.json';
 const sizes = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
 
 const regionColors = {
-  北海道: '#999',
+  北海道: '#2196f3',
   東北: '#2196f3',
   関東: '#ffeb3b',
   中部: '#4caf50',
