@@ -60,14 +60,15 @@ export default function App() {
     compare(p, size);
   };
 
-  const getColor = (pref) => {
-    for (const region in regionMap) {
-      if (regionMap[region].includes(pref)) {
-        return regionColors[region];
-      }
+const getColor = (pref) => {
+  if (pref === '東京') return '#e53935'; // 東京だけ赤
+  for (const region in regionMap) {
+    if (regionMap[region].includes(pref)) {
+      return regionColors[region];
     }
-    return '#ccc';
-  };
+  }
+  return '#ccc';
+};
 
   return (
     <div style={{ padding: 20, maxWidth: 800, margin: '0 auto' }}>
