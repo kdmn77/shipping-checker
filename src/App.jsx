@@ -74,26 +74,20 @@ export default function App() {
     <div style={{ padding: 10, maxWidth: 420, margin: '0 auto' }}>
       <h1>送料比較ツール</h1>
 
-      {result && (
-        <div style={{ background: '#f0f0f0', padding: '8px 10px', marginBottom: 16 }}>
-          <p style={{ fontSize: '18px', fontWeight: 'bold' }}>
-            最安: {result.cheapest}
-            {result.cheapest !== '同額' && (
-              <>
-                {result.cheapest === 'ヤマト' && result.yamato !== undefined && (
-                  <>（{result.yamato.toLocaleString()}円／{result.prefecture}）</>
-                )}
-                {result.cheapest === '佐川' && result.sagawa !== undefined && (
-                  <>（{result.sagawa.toLocaleString()}円／{result.prefecture}）</>
-                )}
-              </>
-            )}
-          </p>
-          <p>サイズ: {result.size}</p>
-          {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
-          {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
-        </div>
-      )}
+      <div style={{ background: '#f0f0f0', padding: '8px 10px', marginBottom: 16, minHeight: 60 }}>
+        {result ? (
+          <>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: 4 }}>
+              最安: {result.cheapest}
+            </p>
+            <p style={{ fontSize: '14px', margin: 0 }}>
+              （サイズ: {result.size} ／ ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + '円' : '―'} ／ 佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + '円' : '―'} ／ {result.prefecture}）
+            </p>
+          </>
+        ) : (
+          <p>サイズと都道府県を選ぶと、送料を表示します。</p>
+        )}
+      </div>
 
       <p>サイズを選んでください：</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 10 }}>
