@@ -124,10 +124,10 @@ export default function App() {
             {result.cheapest !== '同額' && (
               <>
                 {result.cheapest === 'ヤマト' && result.yamato !== undefined && (
-                  <>（{result.yamato.toLocaleString()}円）</>
+                  <>（{result.yamato.toLocaleString()}円／{result.prefecture}）</>
                 )}
                 {result.cheapest === '佐川' && result.sagawa !== undefined && (
-                  <>（{result.sagawa.toLocaleString()}円）</>
+                  <>（{result.sagawa.toLocaleString()}円／{result.prefecture}）</>
                 )}
               </>
             )}
@@ -135,7 +135,6 @@ export default function App() {
           <p>サイズ: {result.size}</p>
           {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
           {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
-          <p>配送先: {result.prefecture}</p>
         </div>
       )}
     </div>
