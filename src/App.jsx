@@ -1,48 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import yamatoData from './yamatoData.json';
 import sagawaData from './sagawaData.json';
 
 const sizes = [60, 80, 100];
-const allPrefectures = ["東京", "大阪", "北海道"];
+const prefectures = ["東京", "大阪", "北海道"];
 
 export default function App() {
   const [size, setSize] = useState(100);
-  const [prefecture, setPrefecture] = useState(null);
+  const [prefecture, setPrefecture] = useState("");
   const [result, setResult] = useState(null);
 
-  const handleClick = (pref) => {
-    setPrefecture(pref);
-    const yamato = yamatoData[String(size)]?.[pref];
-    const sagawa = sagawaData[String(size)]?.[pref];
+  const handleCompare = () => {
+    const yamato = yamatoData[String(size)]?.[prefecture];
+    const sagawa = sagawaData[String(size)]?.[prefecture];
 
     if (yamato == null || sagawa == null) {
       setResult({ error: 'データが見つかりません' });
     } else {
       const cheapest = yamato < sagawa ? 'ヤマト' : sagawa < yamato ? '佐川' : '同額';
-      setResult({ size, prefecture: pref, yamato, sagawa, cheapest });
+      setResult({ size, prefecture, yamato, sagawa, cheapest });
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const svgDoc = document.querySelector('object')?.contentDocument;
-      if (svgDoc) {
-        allPrefectures.forEach(p => {
-          const el = svgDoc.getElementById(p);
-          if (el) {
-            el.style.cursor = 'pointer';
-            el.addEventListener('click', () => handleClick(p));
-          }
-        });
-      }
-    }, 500); // SVG描画待ち
-
-    return () => clearTimeout(timer);
-  }, [size]);
-
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
-      <h1>送料比較ツール V4</h1>
+      <h1>送料比較ツール V2</h1>
 
       <div style={{ marginBottom: 10 }}>
         <p>サイズを選んでください：</p>
@@ -53,16 +35,30 @@ export default function App() {
             background: s === size ? '#0070f3' : '#eee',
             color: s === size ? 'white' : 'black',
             border: 'none',
-            borderRadius: 4,
-            fontSize: 14
+            borderRadius: 4
           }}>
             {s}
           </button>
         ))}
       </div>
 
-      <p>地図をクリックしてください：</p>
-      <object data="/japan.svg" type="image/svg+xml" style={{ width: '100%', maxWidth: '500px' }} />
+      <div style={{ marginBottom: 10 }}>
+        <p>都道府県を選んでください：</p>
+        {prefectures.map(p => (
+          <button key={p} onClick={() => setPrefecture(p)} style={{
+            margin: 4,
+            padding: 8,
+            background: p === prefecture ? '#0070f3' : '#eee',
+            color: p === prefecture ? 'white' : 'black',
+            border: 'none',
+            borderRadius: 4
+          }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <button onClick={handleCompare} style={{ marginTop: 10, padding: 10 }}>比較する</button>
 
       {result && (
         <div style={{ background: '#f0f0f0', padding: 10, marginTop: 20 }}>
@@ -71,3 +67,14 @@ export default function App() {
           ) : (
             <>
               <p>サイズ: {result.size}</p>
+              <p>配送先: {result.prefecture}</p>
+              <p>ヤマト: {result.yamato.toLocaleString()}円</p>
+              <p>佐川: {result.sagawa.toLocaleString()}円</p>
+              <p><strong>最安: {result.cheapest}</strong></p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
