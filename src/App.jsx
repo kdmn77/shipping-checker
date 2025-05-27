@@ -29,8 +29,8 @@ const regionMap = {
 const allPrefectures = Object.values(regionMap).flat();
 
 export default function App() {
-  const [size, setSize] = useState(100);
-  const [prefecture, setPrefecture] = useState('東京');
+  const [size, setSize] = useState(60);
+  const [prefecture, setPrefecture] = useState(null);
   const [result, setResult] = useState(null);
 
   const compare = (newPrefecture = prefecture, newSize = size) => {
