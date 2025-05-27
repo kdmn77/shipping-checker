@@ -71,7 +71,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: 10, maxWidth: 420, margin: '0 auto' }}>
+    <div style={{ padding: 10, maxWidth: 420, margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif' }}>
       <h1>送料比較ツール</h1>
 
       <div style={{ background: '#f0f0f0', padding: '8px 10px', marginBottom: 16, minHeight: 60 }}>
@@ -84,8 +84,9 @@ export default function App() {
               ／{result.size}／{result.prefecture}）
             </p>
             <p style={{ fontSize: '14px', margin: 0 }}>
-              ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + '円' : '―'}　 
-              佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + '円' : '―'}
+              ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + "円" : "―円"}
+            <br />
+            佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + "円" : "―円"}
             </p>
           </>
         ) : (
