@@ -118,7 +118,19 @@ export default function App() {
 
 {result && (
   <div style={{ background: '#f0f0f0', padding: 10 }}>
-    <p style={{ fontSize: '20px', fontWeight: 'bold' }}>最安: {result.cheapest}</p>
+    <p style={{ fontSize: '20px', fontWeight: 'bold' }}>
+      最安: {result.cheapest}
+      {result.cheapest !== '同額' && (
+        <>
+          {result.cheapest === 'ヤマト' && result.yamato !== undefined && (
+            <>（{result.yamato.toLocaleString()}円）</>
+          )}
+          {result.cheapest === '佐川' && result.sagawa !== undefined && (
+            <>（{result.sagawa.toLocaleString()}円）</>
+          )}
+        </>
+      )}
+    </p>
     <p>サイズ: {result.size}</p>
     {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
     {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
