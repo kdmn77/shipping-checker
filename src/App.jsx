@@ -100,17 +100,15 @@ export default function App() {
           <button
             key={s}
             onClick={() => handleSizeClick(s)}
-style={{
-  margin: 2,
-  padding: '6px 8px',
-  minWidth: 48,
-  background: getColor(p),
-  color: '#fff',
-  border: '2px solid transparent', // ← ここを常に2pxに統一
-  borderColor: p === prefecture ? '#000' : 'transparent', // ← 色だけ変える
-  borderRadius: 4,
-  fontSize: 12
-}}
+            style={{
+              margin: 4,
+              padding: 8,
+              background: s === size ? '#0070f3' : '#eee',
+              color: s === size ? 'white' : 'black',
+              border: 'none',
+              borderRadius: 4,
+              fontSize: 14
+            }}
           >
             {s}
           </button>
