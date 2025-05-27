@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import yamatoData from './yamatoData.json';
 import sagawaData from './sagawaData.json';
 
@@ -23,6 +23,23 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const svgDoc = document.querySelector('object')?.contentDocument;
+      if (svgDoc) {
+        allPrefectures.forEach(p => {
+          const el = svgDoc.getElementById(p);
+          if (el) {
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', () => handleClick(p));
+          }
+        });
+      }
+    }, 500); // SVG描画待ち
+
+    return () => clearTimeout(timer);
+  }, [size]);
+
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
       <h1>送料比較ツール V4</h1>
@@ -45,20 +62,7 @@ export default function App() {
       </div>
 
       <p>地図をクリックしてください：</p>
-      <object data="/japan.svg" type="image/svg+xml" style={{ width: '100%', maxWidth: '500px' }}
-        onLoad={(e) => {
-          const svgDoc = e.target.contentDocument;
-          if (svgDoc) {
-            allPrefectures.forEach(p => {
-              const el = svgDoc.getElementById(p);
-              if (el) {
-                el.style.cursor = 'pointer';
-                el.addEventListener('click', () => handleClick(p));
-              }
-            });
-          }
-        }}
-      />
+      <object data="/japan.svg" type="image/svg+xml" style={{ width: '100%', maxWidth: '500px' }} />
 
       {result && (
         <div style={{ background: '#f0f0f0', padding: 10, marginTop: 20 }}>
@@ -67,14 +71,3 @@ export default function App() {
           ) : (
             <>
               <p>サイズ: {result.size}</p>
-              <p>配送先: {result.prefecture}</p>
-              <p>ヤマト: {result.yamato.toLocaleString()}円</p>
-              <p>佐川: {result.sagawa.toLocaleString()}円</p>
-              <p><strong>最安: {result.cheapest}</strong></p>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
