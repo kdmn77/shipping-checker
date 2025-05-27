@@ -116,15 +116,15 @@ export default function App() {
         ))}
       </div>
 
-      {result && (
-        <div style={{ background: '#f0f0f0', padding: 10 }}>
-          <p>サイズ: {result.size}</p>
-          <p>配送先: {result.prefecture}</p>
-          {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
-          {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
-          <p><strong>最安: {result.cheapest}</strong></p>
-        </div>
-      )}
+{result && (
+  <div style={{ background: '#f0f0f0', padding: 10 }}>
+    <p style={{ fontSize: '20px', fontWeight: 'bold' }}>最安: {result.cheapest}</p>
+    <p>サイズ: {result.size}</p>
+    {result.yamato !== undefined && <p>ヤマト: {result.yamato.toLocaleString()}円</p>}
+    {result.sagawa !== undefined && <p>佐川: {result.sagawa.toLocaleString()}円</p>}
+    <p>配送先: {result.prefecture}</p>
+  </div>
+)}
     </div>
   );
 }
