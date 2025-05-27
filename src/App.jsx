@@ -1,139 +1,141 @@
+import { useState } from 'react';
+import yamatoData from './yamatoData.json';
+import sagawaData from './sagawaData.json';
 
-import React, { useState } from "react";
-import yamatoData from "./yamatoData.json";
-import sagawaData from "./sagawaData.json";
+const sizes = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
 
-const COLORS = {
-  北海道: "#2196f3",
-  青森: "#2196f3", 岩手: "#2196f3", 宮城: "#2196f3", 秋田: "#2196f3", 山形: "#2196f3", 福島: "#2196f3",
-  茨城: "#ffeb3b", 栃木: "#ffeb3b", 群馬: "#ffeb3b", 埼玉: "#ffeb3b", 千葉: "#ffeb3b", 東京: "#f44336", 神奈川: "#ffeb3b",
-  新潟: "#4caf50", 富山: "#4caf50", 石川: "#4caf50", 福井: "#4caf50", 山梨: "#4caf50", 長野: "#4caf50", 岐阜: "#4caf50", 静岡: "#4caf50", 愛知: "#4caf50",
-  三重: "#03a9f4", 滋賀: "#03a9f4", 京都: "#03a9f4", 大阪: "#03a9f4", 兵庫: "#03a9f4", 奈良: "#03a9f4", 和歌山: "#03a9f4",
-  鳥取: "#f44336", 島根: "#f44336", 岡山: "#f44336", 広島: "#f44336", 山口: "#f44336",
-  徳島: "#ba68c8", 香川: "#ba68c8", 愛媛: "#ba68c8", 高知: "#ba68c8",
-  福岡: "#f48fb1", 佐賀: "#f48fb1", 長崎: "#f48fb1", 熊本: "#f48fb1", 大分: "#f48fb1", 宮崎: "#f48fb1", 鹿児島: "#f48fb1", 沖縄: "#f48fb1",
+const regionColors = {
+  北海道: '#2196f3',
+  東北: '#2196f3',
+  関東: '#ffeb3b',
+  中部: '#4caf50',
+  近畿: '#81d4fa',
+  中国: '#f44336',
+  四国: '#ba68c8',
+  九州沖縄: '#f48fb1',
 };
 
-const PREFS = Object.keys(COLORS);
-const SIZES = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
+const regionMap = {
+  北海道: ['北海道'],
+  東北: ['青森', '岩手', '宮城', '秋田', '山形', '福島'],
+  関東: ['茨城', '栃木', '群馬', '埼玉', '千葉', '東京', '神奈川'],
+  中部: ['新潟', '富山', '石川', '福井', '山梨', '長野', '岐阜', '静岡', '愛知'],
+  近畿: ['三重', '滋賀', '京都', '大阪', '兵庫', '奈良', '和歌山'],
+  中国: ['鳥取', '島根', '岡山', '広島', '山口'],
+  四国: ['徳島', '香川', '愛媛', '高知'],
+  九州沖縄: ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄']
+};
 
-function App() {
-  const [size, setSize] = useState(60);
-  const [pref, setPref] = useState(null);
+const allPrefectures = Object.values(regionMap).flat();
 
-  const getPrice = (data, pref, size) => {
-    const item = data.find((d) => d.pref === pref);
-    return item && item.prices[String(size)];
+export default function App() {
+  const [size, setSize] = useState(100);
+  const [prefecture, setPrefecture] = useState('東京');
+  const [result, setResult] = useState(null);
+
+  const compare = (newPrefecture = prefecture, newSize = size) => {
+    const yamato = yamatoData[newSize]?.[newPrefecture];
+    const sagawa = sagawaData[newSize]?.[newPrefecture];
+
+    if (yamato == null && sagawa == null) {
+      setResult(null);
+    } else {
+      const cheapest =
+        yamato == null ? '佐川' :
+        sagawa == null ? 'ヤマト' :
+        yamato < sagawa ? 'ヤマト' :
+        sagawa < yamato ? '佐川' : '同額';
+      setResult({ size: newSize, prefecture: newPrefecture, yamato, sagawa, cheapest });
+    }
   };
 
-  const result =
-    pref && size
-      ? {
-          yamato: getPrice(yamatoData, pref, size),
-          sagawa: getPrice(sagawaData, pref, size),
-        }
-      : null;
+  const handleSizeClick = (s) => {
+    setSize(s);
+    compare(prefecture, s);
+  };
 
-  let cheapest = null;
-  if (result?.yamato !== undefined || result?.sagawa !== undefined) {
-    if (
-      result.yamato !== undefined &&
-      (result.sagawa === undefined || result.yamato <= result.sagawa)
-    ) {
-      cheapest = { service: "ヤマト", price: result.yamato };
-    } else if (result.sagawa !== undefined) {
-      cheapest = { service: "佐川", price: result.sagawa };
+  const handlePrefectureClick = (p) => {
+    setPrefecture(p);
+    compare(p, size);
+  };
+
+  const getColor = (pref) => {
+    if (pref === '東京') return '#e53935';
+    if (pref === '大阪') return '#1976d2';
+    for (const region in regionMap) {
+      if (regionMap[region].includes(pref)) {
+        return regionColors[region];
+      }
     }
-  }
+    return '#ccc';
+  };
 
   return (
-    <div
-      style={{
-        padding: 20,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif',
-        maxWidth: 520,
-        margin: "0 auto",
-      }}
-    >
+    <div style={{ padding: 10, maxWidth: 420, margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif' }}>
       <h1>送料比較ツール</h1>
 
-      <div
-        style={{
-          background: "#eee",
-          padding: 20,
-          minHeight: 80,
-          marginBottom: 20,
-        }}
-      >
-        {cheapest ? (
+      <div style={{ background: '#f0f0f0', padding: '8px 10px', marginBottom: 16, minHeight: 60 }}>
+        {result ? (
           <>
-            <div style={{ fontWeight: "bold", fontSize: "18px" }}>
-              最安: {cheapest.service}（{cheapest.price.toLocaleString()}円／{size}／{pref}）
-            </div>
-            <div style={{ fontSize: "14px", marginTop: 4 }}>
-              ヤマト:{" "}
-              {result.yamato !== undefined
-                ? result.yamato.toLocaleString() + "円"
-                : "―円"}
-              <br />
-              佐川:{" "}
-              {result.sagawa !== undefined
-                ? result.sagawa.toLocaleString() + "円"
-                : "―円"}
-            </div>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: 4 }}>
+              最安: {result.cheapest}（
+              {result.cheapest === 'ヤマト' && result.yamato !== undefined && result.yamato.toLocaleString() + '円'}
+              {result.cheapest === '佐川' && result.sagawa !== undefined && result.sagawa.toLocaleString() + '円'}
+              ／{result.size}／{result.prefecture}）
+            </p>
+            <p style={{ fontSize: '14px', margin: 0 }}>
+              ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + "円" : "―円"}
+            <br />
+            佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + "円" : "―円"}
+            </p>
           </>
         ) : (
-          <div>サイズと都道府県を選ぶと、送料を表示します。</div>
+          <p>サイズと都道府県を選ぶと、送料を表示します。</p>
         )}
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ marginBottom: 8 }}>サイズを選んでください：</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {SIZES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSize(s)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 6,
-                border: "none",
-                background: s === size ? "#007bff" : "#eee",
-                color: s === size ? "#fff" : "#000",
-                fontWeight: s === size ? "bold" : "normal",
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+      <p>サイズを選んでください：</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 10 }}>
+        {sizes.map(s => (
+          <button
+            key={s}
+            onClick={() => handleSizeClick(s)}
+            style={{
+              margin: 4,
+              padding: 8,
+              background: s === size ? '#0070f3' : '#eee',
+              color: s === size ? 'white' : 'black',
+              border: 'none',
+              borderRadius: 4,
+              fontSize: 14
+            }}
+          >
+            {s}
+          </button>
+        ))}
       </div>
 
-      <div>
-        <div style={{ marginBottom: 8 }}>都道府県を選んでください：</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {PREFS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPref(p)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 6,
-                border:
-                  pref === p ? "2px solid #000" : "1px solid transparent",
-                background: COLORS[p],
-                color: "#fff",
-                fontWeight: pref === p ? "bold" : "normal",
-              }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+      <p>都道府県を選んでください：</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 10 }}>
+        {allPrefectures.map(p => (
+          <button
+            key={p}
+            onClick={() => handlePrefectureClick(p)}
+            style={{
+              margin: 2,
+              padding: '6px 8px',
+              minWidth: 48,
+              background: getColor(p),
+              color: p === prefecture ? '#fff' : '#000',
+              border: p === prefecture ? '2px solid #000' : 'none',
+              borderRadius: 4,
+              fontSize: 12
+            }}
+          >
+            {p}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
-
-export default App;
