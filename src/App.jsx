@@ -105,8 +105,7 @@ export default function App() {
               padding: 8,
               background: s === size ? '#0070f3' : '#eee',
               color: s === size ? 'white' : 'black',
-              border: '2px solid transparent', // ← ここを常に2pxに統一
-              borderColor: p === prefecture ? '#000' : 'transparent', // ← 色だけ変える
+              border: 'none',
               borderRadius: 4,
               fontSize: 14
             }}
