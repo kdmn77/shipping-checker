@@ -78,10 +78,14 @@ export default function App() {
         {result ? (
           <>
             <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: 4 }}>
-              最安: {result.cheapest}
+              最安: {result.cheapest}（
+              {result.cheapest === 'ヤマト' && result.yamato !== undefined && result.yamato.toLocaleString() + '円'}
+              {result.cheapest === '佐川' && result.sagawa !== undefined && result.sagawa.toLocaleString() + '円'}
+              ／{result.size}／{result.prefecture}）
             </p>
             <p style={{ fontSize: '14px', margin: 0 }}>
-              （サイズ: {result.size} ／ ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + '円' : '―'} ／ 佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + '円' : '―'} ／ {result.prefecture}）
+              ヤマト: {result.yamato !== undefined ? result.yamato.toLocaleString() + '円' : '―'}　 
+              佐川: {result.sagawa !== undefined ? result.sagawa.toLocaleString() + '円' : '―'}
             </p>
           </>
         ) : (
