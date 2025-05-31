@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import yamatoData from './yamatoData.json';
 import sagawaData from './sagawaData.json';
 
@@ -10,10 +10,10 @@ const sizes = [
 
 /* 料金表（2025-05 時点） */
 const priceList = {
-  'レターパックライト' : 430,  // :contentReference[oaicite:0]{index=0}
-  'レターパックプラス' : 600,  // :contentReference[oaicite:1]{index=1}
-  'クリックポスト'     : 185,  // :contentReference[oaicite:2]{index=2}
-  'ネコポス'           : 385,  // :contentReference[oaicite:3]{index=3}
+  'レターパックライト' : 430,
+  'レターパックプラス' : 600,
+  'クリックポスト'     : 185,
+  'ネコポス'           : 385,
   '宅急便コンパクト'   : 770,
   'ゆうパケット'       : 360,
   'ゆうパケットプラス' : 520,
@@ -49,6 +49,11 @@ export default function App() {
   const [dims, setDims] = useState({ l:'', w:'', h:'' });
   const [matches, setMatches] = useState([]);
 
+  /* ---- input refs (Enter で次へ) ---- */
+  const lRef = useRef(null);
+  const wRef = useRef(null);
+  const hRef = useRef(null);
+
   /* -------- 通常宅配比較 -------- */
   const compare = (p=pref, s=size)=>{
     if (typeof s!=='number'){ setResult(null); return; }
@@ -64,19 +69,14 @@ export default function App() {
     const {l,w,h}=dims; if(!(l&&w&&h)){ setMatches([]); return; }
 
     const nums=[+l,+w,+h];
-    const [a,b,c]=[...nums].sort((x,y)=>y-x);      // a:最長辺
+    const [a,b,c]=[...nums].sort((x,y)=>y-x);
     const sum=nums.reduce((p,n)=>p+n,0);
     const fits = [];
 
-    // レターパックライト：34×25×3以内
     if(a<=34&&b<=25&&c<=3)               fits.push('レターパックライト');
-    // レターパックプラス ：34×25以内（厚み制限なし）
     if(a<=34&&b<=25)                     fits.push('レターパックプラス');
-    // クリックポスト      ：34×25×3以内
     if(a<=34&&b<=25&&c<=3)               fits.push('クリックポスト');
-    // ネコポス            ：32×23×3以内
     if(a<=32&&b<=23&&c<=3)               fits.push('ネコポス');
-    // 既存ゆうパケット系
     if((a<=25&&b<=20&&c<=5)||(a<=34&&b<=25&&c<=5)) fits.push('宅急便コンパクト');
     if(sum<=60&&a<=34&&c<=3)                         fits.push('ゆうパケット');
     if(a<=24&&b<=17&&c<=7)                           fits.push('ゆうパケットプラス');
@@ -91,10 +91,18 @@ export default function App() {
     else{ setShowCustom(false); compare(pref,s); }
   };
   const handlePref = p=>{ setPref(p); compare(p,size); };
+
+  /* 2桁(厚みは1桁)入力＋Enter(確定)で次欄へ */
   const handleInput = k=>e=>{
     let v=e.target.value.replace(/\D/g,'');
     if(k==='h')v=v.slice(0,1); else v=v.slice(0,2);
     setDims(d=>({...d,[k]:v}));
+  };
+  const handleKey = nextRef => e=>{
+    if(e.key==='Enter' && nextRef?.current){
+      e.preventDefault();
+      nextRef.current.focus();
+    }
   };
 
   /* -------- JSX -------- */
@@ -107,19 +115,16 @@ export default function App() {
     {/* 結果表示 */}
     <div style={{background:'#f0f0f0',padding:'1vh',minHeight:'8vh',marginBottom:'1vh',fontSize:'3.6vw'}}>
       {showCustom ? (
-        matches.length ? (()=>{   /* 安い順ソート＋最安強調 */
-          const sorted=[...matches].sort((a,b)=>priceList[a]-priceList[b]);
+        matches.length ? (()=>{const sorted=[...matches].sort((a,b)=>priceList[a]-priceList[b]);
           const cheapest=sorted[0];
-          return (
-            <>
-              <div style={{fontWeight:'bold',fontSize:'4vw'}}>
-                最安: {cheapest}（{priceList[cheapest].toLocaleString()}円）
-              </div>
-              <div style={{fontSize:'3.2vw'}}>
-                {sorted.map(s=>`${s}: ${priceList[s].toLocaleString()}円`).join(' ／ ')}
-              </div>
-            </>
-          );
+          return(<>
+            <div style={{fontWeight:'bold',fontSize:'4vw'}}>
+              最安: {cheapest}（{priceList[cheapest].toLocaleString()}円）
+            </div>
+            <div style={{fontSize:'3.2vw'}}>
+              {sorted.map(s=>`${s}: ${priceList[s].toLocaleString()}円`).join(' ／ ')}
+            </div>
+          </>);
         })() : <p style={labelStyle}>該当なし</p>
       ) : result ? (
         <>
@@ -155,11 +160,11 @@ export default function App() {
     <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
       <p style={labelStyle}>縦×横×厚み(cm)：</p>
       <div style={{display:'flex',gap:'1vw'}}>
-        <input type="number" placeholder="縦" value={dims.l}
-          onChange={handleInput('l')} style={inputStyle}/>
-        <input type="number" placeholder="横" value={dims.w}
-          onChange={handleInput('w')} style={inputStyle}/>
-        <input type="number" placeholder="厚み" value={dims.h}
+        <input ref={lRef} type="number" placeholder="縦" value={dims.l}
+          onChange={handleInput('l')} onKeyDown={handleKey(wRef)} style={inputStyle}/>
+        <input ref={wRef} type="number" placeholder="横" value={dims.w}
+          onChange={handleInput('w')} onKeyDown={handleKey(hRef)} style={inputStyle}/>
+        <input ref={hRef} type="number" placeholder="厚み" value={dims.h}
           onChange={handleInput('h')} style={inputStyle}/>
       </div>
     </div>
@@ -172,8 +177,8 @@ export default function App() {
           {list.map(p=>{
             const base=name.split('・')[0];
             let bg=regionColors[base]||'#ccc';
-            if(p==='東京') bg=regionColors['中国'];   // 東京:赤
-            if(p==='大阪') bg=regionColors['北海道']; // 大阪:青
+            if(p==='東京') bg=regionColors['中国'];
+            if(p==='大阪') bg=regionColors['北海道'];
             return(
               <button key={p} onClick={()=>handlePref(p)} style={{
                 width:'18%',padding:'.6vh 0',
