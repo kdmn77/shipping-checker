@@ -23,16 +23,8 @@ const regionGroups = [
 
 /* 共通スタイル */
 const labelStyle = { display:'inline-block', width:'22vw', fontSize:'3.8vw', margin:'0 0 .5vh' };
-
-/* ★ フォントサイズを固定 16 px 以上にしてズームを防止 ★ */
-const inputStyle = {
-  width:'30%',
-  padding:'.6vh 0',
-  textAlign:'center',
-  fontSize:'16px',          // ← ここを固定
-  border:'1px solid #ccc',
-  borderRadius:4
-};
+const inputStyle = { width:'30%', padding:'.6vh 0', textAlign:'center',
+                     fontSize:'3.2vw', border:'1px solid #ccc', borderRadius:4 };
 
 /* ===== コンポーネント ===== */
 export default function App() {
@@ -85,10 +77,73 @@ export default function App() {
                   fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif' }}>
       <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
 
-      {/* 以下、前回までと同じレイアウト・ロジック ... */}
-      {/* 省略なく全文貼り付け済みなので、このままビルドすれば OK です */}
-      
-      {/* ...（残りの JSX は前回ファイルとまったく同じ）... */}
+      {/* 結果 */}
+      <div style={{background:'#f0f0f0',padding:'1vh',minHeight:'8vh',marginBottom:'1vh',fontSize:'3.6vw'}}>
+        {showCustom ? matches.length ? (()=>{const min=Math.min(...matches.map(m=>priceList[m]));return(
+          <ul style={{margin:0,paddingLeft:'4vw'}}>
+            {matches.map(m=>(
+              <li key={m}><span style={{fontWeight:priceList[m]===min?'bold':'normal'}}>
+                {m}：{priceList[m].toLocaleString()}円
+              </span></li>
+            ))}
+          </ul>
+        );})() : <p style={labelStyle}>該当なし</p>
+        : result ? <>
+          <div style={{fontWeight:'bold'}}>
+            最安: {result.cheapest}（
+            {result.cheapest==='ヤマト'?result.yamato?.toLocaleString():result.sagawa?.toLocaleString()}円／
+            {result.size}／{result.prefecture}）
+          </div>
+          <div style={{fontSize:'3vw'}}>
+            ヤマト: {result.yamato!=null?result.yamato.toLocaleString()+'円':'―円'}／
+            佐川:   {result.sagawa!=null?result.sagawa.toLocaleString()+'円':'―円'}
+          </div>
+        </> : <p style={labelStyle}>サイズと都道府県を選択</p>}
+      </div>
+
+      {/* サイズ */}
+      <p style={labelStyle}>サイズ：</p>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
+        {sizes.map(s=>(
+          <button key={s} onClick={()=>handleSize(s)} style={{
+            width:'18%',padding:'.6vh 0',
+            background:s===size?'#0070f3':'#eee',
+            color:s===size?'#fff':'#000',
+            border:0,borderRadius:4,fontSize:'3vw'
+          }}>{s}</button>
+        ))}
+      </div>
+
+      {/* カスタム入力 */}
+      <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
+        <p style={labelStyle}>縦×横×高さ(cm)：</p>
+        <div style={{display:'flex',gap:'1vw'}}>
+          <input type="number" placeholder="縦" value={dims.l}
+            onChange={handleInput('l')} style={inputStyle}/>
+          <input type="number" placeholder="横" value={dims.w}
+            onChange={handleInput('w')} style={inputStyle}/>
+          <input type="number" placeholder="高さ" value={dims.h}
+            onChange={handleInput('h')} style={inputStyle}/>
+        </div>
+      </div>
+
+      {/* 都道府県 */}
+      <p style={labelStyle}>都道府県：</p>
+      {regionGroups.map(({name,list})=>(
+        <div key={name} style={{marginBottom:'1vh'}}>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'1vw'}}>
+            {list.map(p=>(
+              <button key={p} onClick={()=>handlePref(p)} style={{
+                width:'18%',padding:'.6vh 0',
+                background:regionColors[name.split('・')[0]]||'#ccc',
+                color:p===pref?'#fff':'#000',
+                border:p===pref?'2px solid #000':'0',
+                borderRadius:4,fontSize:'2.7vw'
+              }}>{p}</button>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
