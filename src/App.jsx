@@ -4,13 +4,13 @@ import sagawaData from './sagawaData.json';
 
 /* ===== 定数 ===== */
 const sizes = [
-  '60より小さいサイズ',   // 先頭に追加（改行で 2 行表記）
+  '60より小さいサイズ',  // カスタム (改行で 2 行表示)
   60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260
 ];
 const priceList = {
   '宅急便コンパクト': 770,
-  'ゆうパケット': 360,
-  'ゆうパケットプラス': 520
+  'ゆうパケット':      360,
+  'ゆうパケットプラス': 520,
 };
 
 const regionColors = {
@@ -45,21 +45,23 @@ export default function App() {
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });   // h = 厚み
   const [matches, setMatches]       = useState([]);
 
-  /* refs for auto-focus */
+  /* refs forフォーカス */
   const lRef = useRef(null);
   const wRef = useRef(null);
   const hRef = useRef(null);
 
   /* ---- 通常サイズ比較 ---- */
   const compare = (p = pref, s = size) => {
-    if (typeof s !== 'number') return;          // カスタムはスキップ
+    if (typeof s !== 'number') return;  // カスタムは比較なし
     const y = yamatoData[s]?.[p];
     const g = sagawaData[s]?.[p];
     if (y == null && g == null) { setResult(null); return; }
-    const cheapest = y == null ? '佐川'
-                    : g == null ? 'ヤマト'
-                    : y < g ? 'ヤマト'
-                    : g < y ? '佐川' : '同額';
+
+    const cheapest =
+      y == null ? '佐川' :
+      g == null ? 'ヤマト' :
+      y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
+
     setResult({ size:s, prefecture:p, yamato:y, sagawa:g, cheapest });
   };
 
@@ -69,116 +71,37 @@ export default function App() {
     const { l,w,h } = dims;
     if (!l || !w || !h) { setMatches([]); return; }
 
-    const nums=[+l,+w,+h];
-    const [a,b,c]=[...nums].sort((x,y)=>y-x);
-    const sum=nums.reduce((p,n)=>p+n,0);
-    const list=[];
-    if ((a<=25&&b<=20&&c<=5)||(a<=34&&b<=25&&c<=5)) list.push('宅急便コンパクト');
-    if (sum<=60&&a<=34&&c<=3)                       list.push('ゆうパケット');
-    if (a<=24&&b<=17&&c<=7)                         list.push('ゆうパケットプラス');
+    const nums = [+l,+w,+h];
+    const [a,b,c] = [...nums].sort((x,y)=>y-x);
+    const sum = nums.reduce((p,n)=>p+n,0);
+    const list = [];
+
+    if ((a<=25&&b<=20&&c<=5) || (a<=34&&b<=25&&c<=5)) list.push('宅急便コンパクト');
+    if (sum<=60 && a<=34 && c<=3)                       list.push('ゆうパケット');
+    if (a<=24 && b<=17 && c<=7)                         list.push('ゆうパケットプラス');
+
     setMatches(list);
   }, [dims, showCustom]);
 
   /* ---- ハンドラ ---- */
-  const handleSize = s=>{
+  const handleSize = s => {
     setSize(s);
-    if (s==='60より小さいサイズ'){ setShowCustom(true); setResult(null); }
-    else                          { setShowCustom(false); compare(pref,s); }
+    if (s === '60より小さいサイズ') {
+      setShowCustom(true);
+      setResult(null);
+    } else {
+      setShowCustom(false);
+      compare(pref, s);
+    }
   };
-  const handlePref = p=>{ setPref(p); compare(p,size); };
+  const handlePref = p => { setPref(p); compare(p, size); };
 
-  /* 入力: 縦・横 = 2 桁で次へ, 厚み = 1 桁で終了 */
-  const handleInput = key => e=>{
+  /* 入力: 縦→横→厚み と順に移動 (厚みは 1 桁) */
+  const handleInput = key => e => {
     let v = e.target.value.replace(/\D/g,'');
-    if (key==='h') v = v.slice(0,1); else v = v.slice(0,2);
-    setDims(d=>({...d,[key]:v}));
-    if (key==='l' && v.length===2) wRef.current?.focus();
-    if (key==='w' && v.length===2) hRef.current?.focus();
-  };
+    if (key === 'h') v = v.slice(0,1);           // 厚みは 1 桁
+    else             v = v.slice(0,2);           // 縦・横は 2 桁
+    setDims(d => ({ ...d, [key]: v }));
 
-  /* ---- JSX ---- */
-  return (
-    <div style={{ maxWidth:420, width:'100%', padding:'1vh 2vw',
-                  fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif' }}>
-      <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
-
-      {/* 結果エリア */}
-      <div style={{background:'#f0f0f0',padding:'1vh',minHeight:'8vh',marginBottom:'1vh',fontSize:'3.6vw'}}>
-        {showCustom ? (
-          matches.length ? (()=>{const min=Math.min(...matches.map(m=>priceList[m]));return(
-            <ul style={{margin:0,paddingLeft:'4vw'}}>
-              {matches.map(m=>(
-                <li key={m}><span style={{fontWeight:priceList[m]===min?'bold':'normal'}}>
-                  {m}：{priceList[m].toLocaleString()}円
-                </span></li>
-              ))}
-            </ul>
-          );})() : <p style={labelStyle}>該当なし</p>
-        ) : result ? (
-          <>
-            <div style={{fontWeight:'bold'}}>
-              最安: {result.cheapest}（
-              {result.cheapest==='ヤマト'
-                ? result.yamato?.toLocaleString()
-                : result.sagawa?.toLocaleString()
-              }円／{result.size}／{result.prefecture}）
-            </div>
-            <div style={{fontSize:'3vw'}}>
-              ヤマト: {result.yamato!=null?result.yamato.toLocaleString()+'円':'―円'}／
-              佐川:   {result.sagawa!=null?result.sagawa.toLocaleString()+'円':'―円'}
-            </div>
-          </>
-        ) : <p style={labelStyle}>サイズと都道府県を選択</p>}
-      </div>
-
-      {/* ▼ カスタム入力欄（結果下） ▼ */}
-      <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',margin:'1vh 0'}}>
-        <p style={labelStyle}>縦×横×厚み(cm)：</p>
-        <div style={{display:'flex',gap:'1vw'}}>
-          <input ref={lRef} type="number" placeholder="縦" value={dims.l}
-            onChange={handleInput('l')} style={inputStyle}/>
-          <input ref={wRef} type="number" placeholder="横" value={dims.w}
-            onChange={handleInput('w')} style={inputStyle}/>
-          <input ref={hRef} type="number" placeholder="厚み" value={dims.h}
-            onChange={handleInput('h')} style={inputStyle}/>
-        </div>
-      </div>
-
-      {/* サイズボタン */}
-      <p style={labelStyle}>サイズ：</p>
-      <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
-        {sizes.map(s=>(
-          <button key={s} onClick={()=>handleSize(s)} style={{
-            width:'18%', padding:'.6vh 0',
-            background:s===size?'#0070f3':'#eee',
-            color:s===size?'#fff':'#000',
-            border:0, borderRadius:4, fontSize:'3vw',
-            whiteSpace:'normal', lineHeight:1.15   // 改行許可
-          }}>
-            {s==='60より小さいサイズ'
-              ? <>60より<br/>小さいサイズ</>
-              : s}
-          </button>
-        ))}
-      </div>
-
-      {/* 都道府県 */}
-      <p style={labelStyle}>都道府県：</p>
-      {regionGroups.map(({name,list})=>(
-        <div key={name} style={{marginBottom:'1vh'}}>
-          <div style={{display:'flex',flexWrap:'wrap',gap:'1vw'}}>
-            {list.map(p=>(
-              <button key={p} onClick={()=>handlePref(p)} style={{
-                width:'18%', padding:'.6vh 0',
-                background:regionColors[name.split('・')[0]]||'#ccc',
-                color:p===pref?'#fff':'#000',
-                border:p===pref?'2px solid #000':'0',
-                borderRadius:4, fontSize:'2.7vw'
-              }}>{p}</button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+    /* 次欄が空欄の時のみフォーカス移動 (二重ジャンプ防止) */
+    if (key === 'l' && v.length === 2 && wRef.current?.value.length === 0) {
