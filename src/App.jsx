@@ -5,7 +5,7 @@ import sagawaData from './sagawaData.json';
 /* ===== 定数 ===== */
 const sizes = [
   60, 80, 100, 120, 140, 160, 170, 180,
-  200, 220, 240, 260, '薄物／書類'          // ← 表記
+  200, 220, 240, 260, '薄物／書類'
 ];
 
 const priceList = {
@@ -23,7 +23,7 @@ const regionColors = {
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
 
-/* 東京と大阪を先頭に */
+/* 東京を先頭・大阪を先頭に */
 const regionGroups = [
   { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
   { name:'関東',         list:['東京','茨城','栃木','群馬','埼玉','千葉','神奈川'] },
@@ -41,31 +41,34 @@ const inputStyle = { width:'30%', padding:'.6vh 0', textAlign:'center',
 
 /* ===== メイン ===== */
 export default function App() {
-  const [size, setSize]     = useState(60);
-  const [pref, setPref]     = useState(null);
-  const [result, setResult] = useState(null);
+  const [size, setSize]     = useState(60);   // 選択サイズ
+  const [pref, setPref]     = useState(null); // 選択都道府県
+  const [result, setResult] = useState(null); // 料金比較結果
 
   const [showCustom, setShowCustom] = useState(false);
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });
   const [matches, setMatches]       = useState([]);
 
-  /* refs: Enter で次欄 */
+  /* refs for Enter → 次欄 */
   const lRef = useRef(null);
   const wRef = useRef(null);
   const hRef = useRef(null);
 
-  /* ---------- 通常宅配比較 ---------- */
-  const compare = (p = pref, s = size) => {
-    if (typeof s !== 'number') { setResult(null); return; }
-    const y = yamatoData[s]?.[p];
-    const g = sagawaData[s]?.[p];
-    if (y == null && g == null) { setResult(null); return; }
-    const cheapest =
-      y == null ? '佐川' :
-      g == null ? 'ヤマト' :
-      y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
-    setResult({ size:s, prefecture:p, yamato:y, sagawa:g, cheapest });
-  };
+  /* === どちらの順でも料金比較できるように === */
+  useEffect(() => {
+    if (typeof size === 'number' && pref) {
+      const y = yamatoData[size]?.[pref];
+      const g = sagawaData[size]?.[pref];
+      if (y == null && g == null) { setResult(null); return; }
+      const cheapest =
+        y == null ? '佐川' :
+        g == null ? 'ヤマト' :
+        y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
+      setResult({ size, prefecture: pref, yamato: y, sagawa: g, cheapest });
+    } else {
+      setResult(null); // どちらか未選択
+    }
+  }, [size, pref]);
 
   /* ---------- 薄物／書類 判定 ---------- */
   useEffect(() => {
@@ -78,9 +81,7 @@ export default function App() {
     const sum = nums.reduce((p, n) => p + n, 0);
     const fits = [];
 
-    if (a <= 34 && b <= 25 && c <= 3) fits.push('レターパックライト');
-    if (a <= 34 && b <= 25 && c <= 3) fits.push('レターパックプラス');
-    if (a <= 34 && b <= 25 && c <= 3) fits.push('クリックポスト');
+    if (a <= 34 && b <= 25 && c <= 3) fits.push('レターパックライト','レターパックプラス','クリックポスト');
     if (a <= 32 && b <= 23 && c <= 3) fits.push('ネコポス');
     if ((a <= 25 && b <= 20 && c <= 5) || (a <= 34 && b <= 25 && c <= 5))
       fits.push('宅急便コンパクト');
@@ -93,10 +94,10 @@ export default function App() {
   /* ---------- ハンドラ ---------- */
   const handleSize = s => {
     setSize(s);
-    if (s === '薄物／書類') { setShowCustom(true); setResult(null); }
-    else { setShowCustom(false); compare(pref, s); }
+    if (s === '薄物／書類') { setShowCustom(true); }
+    else { setShowCustom(false); }
   };
-  const handlePref = p => { setPref(p); compare(size, p); };
+  const handlePref = p => setPref(p);
 
   const handleInput = k => e => {
     let v = e.target.value.replace(/\D/g, '');
@@ -113,19 +114,20 @@ export default function App() {
   /* ---------- JSX ---------- */
   return (
     <>
-      {/* デスクトップ用スタイル（768px 以上） */}
+      {/* PC 用スタイル (768px〜) */}
       <style>{`
         @media (min-width:768px){
-          .container      {max-width:none !important; width:100% !important; font-size:16px;}
-          .flex           {flex-wrap:nowrap !important; gap:8px;}
-          .btn            {width:auto !important; padding:8px 14px; font-size:14px;}
-          .label          {width:auto !important; font-size:16px;}
-          .input          {width:110px; font-size:14px;}
+          .container   {max-width:none !important; width:100% !important; font-size:15px;}
+          .flex        {flex-wrap:nowrap !important; gap:12px;}
+          .size-btn    {width:auto !important; padding:10px 16px; font-size:15px;}
+          .pref-btn    {width:auto !important; padding:12px 18px; font-size:15px;}
+          .label       {width:auto !important; font-size:17px;}
+          .input       {width:120px; font-size:15px;}
         }
       `}</style>
 
       <div className="container" style={{
-        maxWidth:420, width:'100%', padding:'1vh 2vw',
+        maxWidth:420,width:'100%',padding:'1vh 2vw',
         fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif'}}>
 
         <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
@@ -170,7 +172,7 @@ export default function App() {
         <div className="flex" style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
           {sizes.map(s=>(
             <button key={s} onClick={()=>handleSize(s)}
-              className="btn"
+              className="size-btn"
               style={{
                 width:'18%', padding:'.6vh 0',
                 background:s===size?'#0070f3':'#eee',
@@ -204,13 +206,13 @@ export default function App() {
               {list.map(p=>{
                 const base=name.split('・')[0];
                 let bg=regionColors[base]||'#ccc';
-                if(p==='東京') bg=regionColors['中国'];    // 東京:赤
-                if(p==='大阪') bg=regionColors['北海道'];  // 大阪:青
+                if(p==='東京') bg=regionColors['中国'];
+                if(p==='大阪') bg=regionColors['北海道'];
                 return(
                   <button key={p} onClick={()=>handlePref(p)}
-                    className="btn"
+                    className="pref-btn"
                     style={{
-                      width:'18%', padding:'.6vh 0',
+                      width:'18%', padding:'1.2vh 0',
                       background:bg,
                       color:p===pref?'#fff':'#000',
                       border:p===pref?'2px solid #000':'0',
