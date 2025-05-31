@@ -4,10 +4,14 @@ import sagawaData from './sagawaData.json';
 
 /* ===== 定数 ===== */
 const sizes = [
-  '60より小さいサイズ',   // ← 追加（先頭）
+  '60より小さいサイズ',   // 先頭に追加（改行で 2 行表記）
   60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260
 ];
-const priceList = { '宅急便コンパクト': 770, 'ゆうパケット': 360, 'ゆうパケットプラス': 520 };
+const priceList = {
+  '宅急便コンパクト': 770,
+  'ゆうパケット': 360,
+  'ゆうパケットプラス': 520
+};
 
 const regionColors = {
   北海道:'#2196f3', 東北:'#2196f3', 関東:'#ffeb3b', 中部:'#4caf50',
@@ -52,8 +56,10 @@ export default function App() {
     const y = yamatoData[s]?.[p];
     const g = sagawaData[s]?.[p];
     if (y == null && g == null) { setResult(null); return; }
-    const cheapest = y == null ? '佐川' : g == null ? 'ヤマト'
-                    : y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
+    const cheapest = y == null ? '佐川'
+                    : g == null ? 'ヤマト'
+                    : y < g ? 'ヤマト'
+                    : g < y ? '佐川' : '同額';
     setResult({ size:s, prefecture:p, yamato:y, sagawa:g, cheapest });
   };
 
@@ -86,7 +92,6 @@ export default function App() {
     let v = e.target.value.replace(/\D/g,'');
     if (key==='h') v = v.slice(0,1); else v = v.slice(0,2);
     setDims(d=>({...d,[key]:v}));
-
     if (key==='l' && v.length===2) wRef.current?.focus();
     if (key==='w' && v.length===2) hRef.current?.focus();
   };
@@ -126,7 +131,7 @@ export default function App() {
         ) : <p style={labelStyle}>サイズと都道府県を選択</p>}
       </div>
 
-      {/* ▼ カスタム入力欄を結果のすぐ下に移動 ▼ */}
+      {/* ▼ カスタム入力欄（結果下） ▼ */}
       <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',margin:'1vh 0'}}>
         <p style={labelStyle}>縦×横×厚み(cm)：</p>
         <div style={{display:'flex',gap:'1vw'}}>
@@ -147,8 +152,13 @@ export default function App() {
             width:'18%', padding:'.6vh 0',
             background:s===size?'#0070f3':'#eee',
             color:s===size?'#fff':'#000',
-            border:0, borderRadius:4, fontSize:'3vw'
-          }}>{s}</button>
+            border:0, borderRadius:4, fontSize:'3vw',
+            whiteSpace:'normal', lineHeight:1.15   // 改行許可
+          }}>
+            {s==='60より小さいサイズ'
+              ? <>60より<br/>小さいサイズ</>
+              : s}
+          </button>
         ))}
       </div>
 
