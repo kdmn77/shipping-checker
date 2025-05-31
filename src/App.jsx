@@ -5,12 +5,12 @@ import sagawaData from './sagawaData.json';
 /* ===== 定数 ===== */
 const sizes = [
   60, 80, 100, 120, 140, 160, 170, 180,
-  200, 220, 240, 260, 'パケット系' // ← 追加サービス
+  200, 220, 240, 260, 'パケット系'
 ];
 
 const priceList = {
   'レターパックライト' : 430,
-  'レターパックプラス' : 600,   // 34×25×厚3cm
+  'レターパックプラス' : 600,
   'クリックポスト'     : 185,
   'ネコポス'           : 385,
   '宅急便コンパクト'   : 770,
@@ -34,7 +34,7 @@ const regionGroups = [
   { name:'九州沖縄',     list:['福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'] },
 ];
 
-/* ===== モバイル基本スタイル ===== */
+/* ===== 基本スタイル ===== */
 const labelStyle = { display:'inline-block', width:'22vw', fontSize:'3.8vw', margin:'0 0 .5vh' };
 const inputStyle = {
   width:'30%', padding:'.6vh 0', textAlign:'center',
@@ -42,7 +42,6 @@ const inputStyle = {
 };
 
 export default function App() {
-  /* --- 状態 --- */
   const [size, setSize]     = useState(60);
   const [pref, setPref]     = useState(null);
   const [result, setResult] = useState(null);
@@ -51,7 +50,6 @@ export default function App() {
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });
   const [matches, setMatches]       = useState([]);
 
-  /* --- refs (Enter 移動) --- */
   const lRef = useRef(null);
   const wRef = useRef(null);
   const hRef = useRef(null);
@@ -62,11 +60,7 @@ export default function App() {
       const y = yamatoData[size]?.[pref];
       const g = sagawaData[size]?.[pref];
       if (y == null && g == null) { setResult(null); return; }
-      const cheapest =
-        y == null ? '佐川'
-        : g == null ? 'ヤマト'
-        : y < g ? 'ヤマト'
-        : g < y ? '佐川' : '同額';
+      const cheapest = y==null?'佐川':g==null?'ヤマト':y<g?'ヤマト':g<y?'佐川':'同額';
       setResult({ size, prefecture:pref, yamato:y, sagawa:g, cheapest });
     } else {
       setResult(null);
@@ -92,24 +86,28 @@ export default function App() {
   }, [dims, showCustom]);
 
   /* --- ハンドラ --- */
-  const handleSize = s => {
-    setSize(s);
-    setShowCustom(s === 'パケット系');
-  };
+  const handleSize = s => { setSize(s); setShowCustom(s === 'パケット系'); };
   const handlePref = p => setPref(p);
   const handleInput = k => e => {
     let v=e.target.value.replace(/\D/g,'');
     v = k==='h' ? v.slice(0,1) : v.slice(0,2);
     setDims(d=>({...d,[k]:v}));
   };
-  const handleKey = next => e => {
-    if (e.key==='Enter' && next?.current) { e.preventDefault(); next.current.focus(); }
+
+  /* Enter 移動 & 厚み→Enter でトップへ */
+  const handleKey = nextRef => e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (nextRef?.current) {
+      nextRef.current.focus();
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // 厚み欄で Enter
+    }
   };
 
   /* ===== JSX ===== */
   return (
     <>
-      {/* PC スタイル補正 */}
       <style>{`
         @media (min-width:768px){
           .container {max-width:none;width:100%;font-size:15px;}
@@ -119,7 +117,6 @@ export default function App() {
           .label     {width:auto;font-size:17px;}
           .input     {width:120px;font-size:15px;}
         }
-        /* 結果ブロックとボタン群を同幅にする */
         .control-block{display:inline-block}
       `}</style>
 
@@ -131,7 +128,6 @@ export default function App() {
 
         {/* ===== 結果 + サイズ ===== */}
         <div className="control-block">
-          {/* 結果表示 */}
           <div style={{
             background:'#f0f0f0',padding:'1vh',minHeight:'8vh',
             marginBottom:'1vh',fontSize:'3.6vw'
@@ -168,7 +164,6 @@ export default function App() {
             ) : <p style={labelStyle}>サイズと都道府県を選択</p>}
           </div>
 
-          {/* サイズボタン */}
           <p className="label" style={labelStyle}>サイズ：</p>
           <div className="flex" style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
             {sizes.map(s=>{
@@ -199,12 +194,12 @@ export default function App() {
               onChange={handleInput('w')} onKeyDown={handleKey(hRef)}
               className="input" style={inputStyle}/>
             <input ref={hRef} type="number" placeholder="厚み" value={dims.h}
-              onChange={handleInput('h')}
+              onChange={handleInput('h')} onKeyDown={handleKey(null)}
               className="input" style={inputStyle}/>
           </div>
         </div>
 
-        {/* ===== 都道府県ボタン ===== */}
+        {/* ===== 都道府県 ===== */}
         <p className="label" style={labelStyle}>都道府県：</p>
         {regionGroups.map(({name,list})=>(
           <div key={name} style={{marginBottom:'1vh'}}>
