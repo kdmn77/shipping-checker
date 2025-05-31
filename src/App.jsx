@@ -5,12 +5,12 @@ import sagawaData from './sagawaData.json';
 /* ===== 定数 ===== */
 const sizes = [
   60, 80, 100, 120, 140, 160, 170, 180,
-  200, 220, 240, 260, 'パケット系'
+  200, 220, 240, 260, 'パケット系' // ← 追加サービス
 ];
 
 const priceList = {
   'レターパックライト' : 430,
-  'レターパックプラス' : 600,
+  'レターパックプラス' : 600,   // 34×25×厚3cm
   'クリックポスト'     : 185,
   'ネコポス'           : 385,
   '宅急便コンパクト'   : 770,
@@ -23,6 +23,7 @@ const regionColors = {
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
 
+/* 東京・大阪を先頭へ */
 const regionGroups = [
   { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
   { name:'関東',         list:['東京','茨城','栃木','群馬','埼玉','千葉','神奈川'] },
@@ -33,43 +34,46 @@ const regionGroups = [
   { name:'九州沖縄',     list:['福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'] },
 ];
 
-/* ===== 基本スタイル ===== */
-const labelStyle  = { display:'inline-block', width:'20vw', fontSize:'3.8vw', margin:'0 0 .5vh' };
-const inputStyle  = { width:'28%', padding:'.6vh 0', textAlign:'center',
-                      fontSize:'16px', border:'1px solid #ccc', borderRadius:4 };
+/* ===== モバイル基本スタイル ===== */
+const labelStyle = { display:'inline-block', width:'22vw', fontSize:'3.8vw', margin:'0 0 .5vh' };
+const inputStyle = {
+  width:'30%', padding:'.6vh 0', textAlign:'center',
+  fontSize:'16px', border:'1px solid #ccc', borderRadius:4
+};
 
-/* ===== メイン ===== */
 export default function App() {
-  const [size, setSize]       = useState(60);
-  const [pref, setPref]       = useState(null);
-  const [result, setResult]   = useState(null);
-  const [showCustom, setShow] = useState(false);
-  const [dims, setDims]       = useState({ l:'', w:'', h:'' });
-  const [matches, setMatches] = useState([]);
+  /* --- 状態 --- */
+  const [size, setSize]     = useState(60);
+  const [pref, setPref]     = useState(null);
+  const [result, setResult] = useState(null);
 
-  /* refs  */
+  const [showCustom, setShowCustom] = useState(false);
+  const [dims, setDims]             = useState({ l:'', w:'', h:'' });
+  const [matches, setMatches]       = useState([]);
+
+  /* --- refs (Enter 移動) --- */
   const lRef = useRef(null);
   const wRef = useRef(null);
   const hRef = useRef(null);
 
-  /* === サイズ＋都道府県で料金 === */
+  /* === サイズ＋都道府県で料金比較 === */
   useEffect(() => {
     if (typeof size === 'number' && pref) {
       const y = yamatoData[size]?.[pref];
       const g = sagawaData[size]?.[pref];
-      if (y==null && g==null){ setResult(null); return; }
+      if (y == null && g == null) { setResult(null); return; }
       const cheapest =
-        y==null ? '佐川'
-      : g==null ? 'ヤマト'
-      : y<g   ? 'ヤマト'
-      : g<y   ? '佐川' : '同額';
+        y == null ? '佐川'
+        : g == null ? 'ヤマト'
+        : y < g ? 'ヤマト'
+        : g < y ? '佐川' : '同額';
       setResult({ size, prefecture:pref, yamato:y, sagawa:g, cheapest });
     } else {
       setResult(null);
     }
   }, [size, pref]);
 
-  /* === パケット系サービス判定 === */
+  /* === パケット系 判定 === */
   useEffect(() => {
     if (!showCustom) { setMatches([]); return; }
     const { l, w, h } = dims;
@@ -87,25 +91,25 @@ export default function App() {
     setMatches(list);
   }, [dims, showCustom]);
 
-  /* ---- ハンドラ ---- */
-  const handleSize = s => { setSize(s); setShow(s==='パケット系'); };
+  /* --- ハンドラ --- */
+  const handleSize = s => {
+    setSize(s);
+    setShowCustom(s === 'パケット系');
+  };
   const handlePref = p => setPref(p);
   const handleInput = k => e => {
     let v=e.target.value.replace(/\D/g,'');
-    v = k==='h'?v.slice(0,1):v.slice(0,2);
+    v = k==='h' ? v.slice(0,1) : v.slice(0,2);
     setDims(d=>({...d,[k]:v}));
   };
-  const handleKey = nextRef => e => {
-    if(e.key==='Enter'){
-      e.preventDefault();
-      if(nextRef?.current){ nextRef.current.focus(); }
-      else{ window.scrollTo({ top:0, behavior:'smooth' }); }
-    }
+  const handleKey = next => e => {
+    if (e.key==='Enter' && next?.current) { e.preventDefault(); next.current.focus(); }
   };
 
   /* ===== JSX ===== */
   return (
     <>
+      {/* PC スタイル補正 */}
       <style>{`
         @media (min-width:768px){
           .container {max-width:none;width:100%;font-size:15px;}
@@ -115,7 +119,8 @@ export default function App() {
           .label     {width:auto;font-size:17px;}
           .input     {width:120px;font-size:15px;}
         }
-        .control-block{display:inline-block;width:max-content}
+        /* 結果ブロックとボタン群を同幅にする */
+        .control-block{display:inline-block}
       `}</style>
 
       <div className="container" style={{
@@ -124,22 +129,27 @@ export default function App() {
 
         <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
 
-        {/* ===== 結果 ＋ サイズ ===== */}
+        {/* ===== 結果 + サイズ ===== */}
         <div className="control-block">
-          {/* 結果 */}
-          <div style={{background:'#f0f0f0',padding:'1vh',minHeight:'8vh',
-                       marginBottom:'1vh',fontSize:'3.6vw'}}>
+          {/* 結果表示 */}
+          <div style={{
+            background:'#f0f0f0',padding:'1vh',minHeight:'8vh',
+            marginBottom:'1vh',fontSize:'3.6vw'
+          }}>
             {showCustom ? (
-              matches.length ? (()=>{const sorted=[...matches].sort((a,b)=>priceList[a]-priceList[b]);
-                const cheap=sorted[0];
-                return(<>
-                  <div style={{fontWeight:'bold',fontSize:'4vw'}}>
-                    最安: {cheap}（{priceList[cheap].toLocaleString()}円）
-                  </div>
-                  <div style={{fontSize:'3.2vw'}}>
-                    {sorted.map(n=>`${n}: ${priceList[n].toLocaleString()}円`).join(' ／ ')}
-                  </div>
-                </>);
+              matches.length ? (() => {
+                const sorted=[...matches].sort((a,b)=>priceList[a]-priceList[b]);
+                const cheapest=sorted[0];
+                return (
+                  <>
+                    <div style={{fontWeight:'bold',fontSize:'4vw'}}>
+                      最安: {cheapest}（{priceList[cheapest].toLocaleString()}円）
+                    </div>
+                    <div style={{fontSize:'3.2vw'}}>
+                      {sorted.map(s=>`${s}: ${priceList[s].toLocaleString()}円`).join(' ／ ')}
+                    </div>
+                  </>
+                );
               })() : <p style={labelStyle}>該当なし</p>
             ) : result ? (
               <>
@@ -151,7 +161,7 @@ export default function App() {
                   }円／{result.size}／{result.prefecture}）
                 </div>
                 <div style={{fontSize:'3vw'}}>
-                  ヤマト: {result.yamato!=null?result.yamato.toLocaleString()+'円':'―円'} ／
+                  ヤマト: {result.yamato!=null?result.yamato.toLocaleString()+'円':'―円'}／
                   佐川:   {result.sagawa!=null?result.sagawa.toLocaleString()+'円':'―円'}
                 </div>
               </>
@@ -176,7 +186,7 @@ export default function App() {
               );
             })}
           </div>
-        </div>{/* /control-block */}
+        </div>{/* control-block */}
 
         {/* ===== パケット系入力 ===== */}
         <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
@@ -189,12 +199,12 @@ export default function App() {
               onChange={handleInput('w')} onKeyDown={handleKey(hRef)}
               className="input" style={inputStyle}/>
             <input ref={hRef} type="number" placeholder="厚み" value={dims.h}
-              onChange={handleInput('h')} onKeyDown={handleKey(null)}
+              onChange={handleInput('h')}
               className="input" style={inputStyle}/>
           </div>
         </div>
 
-        {/* ===== 都道府県 ===== */}
+        {/* ===== 都道府県ボタン ===== */}
         <p className="label" style={labelStyle}>都道府県：</p>
         {regionGroups.map(({name,list})=>(
           <div key={name} style={{marginBottom:'1vh'}}>
