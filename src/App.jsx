@@ -3,15 +3,15 @@ import yamatoData from './yamatoData.json';
 import sagawaData from './sagawaData.json';
 
 /* ===== 定数 ===== */
-const customLabel = '60より小さいサイズ';      // カスタム用
-const normalSizes = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
-const priceList = { '宅急便コンパクト': 770, 'ゆうパケット': 360, 'ゆうパケットプラス': 520 };
+const customLabel   = '60以下';                     // ← ここだけ変更
+const normalSizes   = [60, 80, 100, 120, 140, 160, 170, 180, 200, 220, 240, 260];
+const priceList     = { '宅急便コンパクト': 770, 'ゆうパケット': 360, 'ゆうパケットプラス': 520 };
 
-const regionColors = {
+const regionColors  = {
   北海道:'#2196f3', 東北:'#2196f3', 関東:'#ffeb3b', 中部:'#4caf50',
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
-const regionGroups = [
+const regionGroups  = [
   { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
   { name:'関東',         list:['茨城','栃木','群馬','埼玉','千葉','東京','神奈川'] },
   { name:'中部',         list:['新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知'] },
@@ -46,8 +46,10 @@ export default function App() {
     const y = yamatoData[s]?.[p];
     const g = sagawaData[s]?.[p];
     if (y == null && g == null) { setResult(null); return; }
-    const cheapest = y == null ? '佐川' : g == null ? 'ヤマト'
-                    : y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
+    const cheapest = y == null ? '佐川'
+                    : g == null ? 'ヤマト'
+                    : y < g ? 'ヤマト'
+                    : g < y ? '佐川' : '同額';
     setResult({ size:s, prefecture:p, yamato:y, sagawa:g, cheapest });
   };
 
@@ -80,6 +82,7 @@ export default function App() {
     let v=e.target.value.replace(/\D/g,'');
     if(key==='h') v=v.slice(0,1); else v=v.slice(0,2);
     setDims(d=>({...d,[key]:v}));
+
     if(key==='l' && v.length===2 && !wRef.current.value) wRef.current.focus();
     if(key==='w' && v.length===2 && !hRef.current.value) hRef.current.focus();
   };
@@ -119,7 +122,7 @@ export default function App() {
         ) : <p style={labelStyle}>サイズと都道府県を選択</p>}
       </div>
 
-      {/* カスタム入力欄 */}
+      {/* カスタム入力 */}
       <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',margin:'1vh 0'}}>
         <p style={labelStyle}>縦×横×厚み(cm)：</p>
         <div style={{display:'flex',gap:'1vw'}}>
@@ -134,20 +137,20 @@ export default function App() {
 
       {/* サイズボタン */}
       <p style={labelStyle}>サイズ：</p>
-      {/* カスタムボタン 1 行 */}
+
+      {/* カスタムボタン（1 行） */}
       <div style={{display:'flex',gap:'1vw',marginBottom:'1vh'}}>
         <button onClick={()=>handleSize(customLabel)} style={{
           width:'18%',padding:'.6vh 0',
           background:size===customLabel?'#0070f3':'#eee',
           color:size===customLabel?'#fff':'#000',
-          border:0,borderRadius:4,fontSize:'3vw',
-          whiteSpace:'normal',lineHeight:1.15
+          border:0,borderRadius:4,fontSize:'3vw'
         }}>
-          60より<br/>小さいサイズ
+          {customLabel}
         </button>
       </div>
 
-      {/* 通常サイズボタン  */}
+      {/* 通常サイズボタン */}
       <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
         {normalSizes.map(s=>(
           <button key={s} onClick={()=>handleSize(s)} style={{
