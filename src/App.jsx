@@ -124,7 +124,7 @@ export default function App() {
         maxWidth:420,width:'100%',padding:'1vh 2vw',
         fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif'}}>
 
-        <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
+        <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツールV0531</h1>
 
         {/* ===== 結果 + サイズ ===== */}
         <div className="control-block">
