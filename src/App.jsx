@@ -10,7 +10,7 @@ const sizes = [
 
 const priceList = {
   'レターパックライト' : 430,
-  'レターパックプラス' : 600,   // 34×25×3cm 以内
+  'レターパックプラス' : 600,   // 34×25×3 cm 以内
   'クリックポスト'     : 185,
   'ネコポス'           : 385,
   '宅急便コンパクト'   : 770,
@@ -23,7 +23,7 @@ const regionColors = {
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
 
-/* 東京を先頭・大阪を先頭に */
+/* 東京と大阪を先頭に */
 const regionGroups = [
   { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
   { name:'関東',         list:['東京','茨城','栃木','群馬','埼玉','千葉','神奈川'] },
@@ -41,20 +41,19 @@ const inputStyle = { width:'30%', padding:'.6vh 0', textAlign:'center',
 
 /* ===== メイン ===== */
 export default function App() {
-  const [size, setSize]     = useState(60);   // 選択サイズ
-  const [pref, setPref]     = useState(null); // 選択都道府県
-  const [result, setResult] = useState(null); // 料金比較結果
+  const [size, setSize]     = useState(60);
+  const [pref, setPref]     = useState(null);
+  const [result, setResult] = useState(null);
 
   const [showCustom, setShowCustom] = useState(false);
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });
   const [matches, setMatches]       = useState([]);
 
-  /* refs for Enter → 次欄 */
   const lRef = useRef(null);
   const wRef = useRef(null);
   const hRef = useRef(null);
 
-  /* === どちらの順でも料金比較できるように === */
+  /* === サイズ + 都道府県 が揃ったら料金比較 === */
   useEffect(() => {
     if (typeof size === 'number' && pref) {
       const y = yamatoData[size]?.[pref];
@@ -66,11 +65,11 @@ export default function App() {
         y < g ? 'ヤマト' : g < y ? '佐川' : '同額';
       setResult({ size, prefecture: pref, yamato: y, sagawa: g, cheapest });
     } else {
-      setResult(null); // どちらか未選択
+      setResult(null);
     }
   }, [size, pref]);
 
-  /* ---------- 薄物／書類 判定 ---------- */
+  /* --- 薄物／書類 判定 --- */
   useEffect(() => {
     if (!showCustom) { setMatches([]); return; }
     const { l, w, h } = dims;
@@ -91,18 +90,17 @@ export default function App() {
     setMatches(fits);
   }, [dims, showCustom]);
 
-  /* ---------- ハンドラ ---------- */
+  /* --- ハンドラ --- */
   const handleSize = s => {
     setSize(s);
-    if (s === '薄物／書類') { setShowCustom(true); }
-    else { setShowCustom(false); }
+    setShowCustom(s === '薄物／書類');
   };
   const handlePref = p => setPref(p);
 
-  const handleInput = k => e => {
+  const handleInput = key => e => {
     let v = e.target.value.replace(/\D/g, '');
-    if (k === 'h') v = v.slice(0, 1); else v = v.slice(0, 2);
-    setDims(d => ({ ...d, [k]: v }));
+    if (key === 'h') v = v.slice(0, 1); else v = v.slice(0, 2);
+    setDims(d => ({ ...d, [key]: v }));
   };
   const handleKey = nextRef => e => {
     if (e.key === 'Enter' && nextRef?.current) {
@@ -111,10 +109,10 @@ export default function App() {
     }
   };
 
-  /* ---------- JSX ---------- */
+  /* ===== JSX ===== */
   return (
     <>
-      {/* PC 用スタイル (768px〜) */}
+      {/* PC 用スタイル */}
       <style>{`
         @media (min-width:768px){
           .container   {max-width:none !important; width:100% !important; font-size:15px;}
@@ -167,19 +165,24 @@ export default function App() {
           ) : <p style={labelStyle}>サイズと都道府県を選択</p>}
         </div>
 
-        {/* サイズ */}
+        {/* サイズボタン */}
         <p className="label" style={labelStyle}>サイズ：</p>
         <div className="flex" style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
-          {sizes.map(s=>(
-            <button key={s} onClick={()=>handleSize(s)}
-              className="size-btn"
-              style={{
-                width:'18%', padding:'.6vh 0',
-                background:s===size?'#0070f3':'#eee',
-                color:s===size?'#fff':'#000',
-                border:0, borderRadius:4, fontSize:'3vw'
-              }}>{s}</button>
-          ))}
+          {sizes.map(s=>{
+            const selected = s === size;
+            const border   = selected ? '#000' : 'transparent'; // always 2px
+            return (
+              <button key={s} onClick={()=>handleSize(s)}
+                className="size-btn"
+                style={{
+                  width:'18%', padding:'.6vh 0',
+                  background:selected?'#0070f3':'#eee',
+                  color:selected?'#fff':'#000',
+                  border:`2px solid ${border}`,
+                  borderRadius:4, fontSize:'3vw'
+                }}>{s}</button>
+            );
+          })}
         </div>
 
         {/* 薄物／書類入力 */}
@@ -198,7 +201,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 都道府県 */}
+        {/* 都道府県ボタン */}
         <p className="label" style={labelStyle}>都道府県：</p>
         {regionGroups.map(({name,list})=>(
           <div key={name} style={{marginBottom:'1vh'}}>
@@ -208,14 +211,16 @@ export default function App() {
                 let bg=regionColors[base]||'#ccc';
                 if(p==='東京') bg=regionColors['中国'];
                 if(p==='大阪') bg=regionColors['北海道'];
+                const selected = p === pref;
+                const border   = selected ? '#000' : 'transparent';
                 return(
                   <button key={p} onClick={()=>handlePref(p)}
                     className="pref-btn"
                     style={{
                       width:'18%', padding:'1.2vh 0',
                       background:bg,
-                      color:p===pref?'#fff':'#000',
-                      border:p===pref?'2px solid #000':'0',
+                      color:selected?'#fff':'#000',
+                      border:`2px solid ${border}`,
                       borderRadius:4, fontSize:'2.7vw'
                     }}>{p}</button>
                 );
