@@ -10,37 +10,28 @@ const regionColors = {
   北海道:'#2196f3', 東北:'#2196f3', 関東:'#ffeb3b', 中部:'#4caf50',
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
-const regionMap = {
-  北海道:['北海道'],
-  東北:['青森','岩手','宮城','秋田','山形','福島'],
-  関東:['茨城','栃木','群馬','埼玉','千葉','東京','神奈川'],
-  中部:['新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知'],
-  近畿:['三重','滋賀','京都','大阪','兵庫','奈良','和歌山'],
-  中国:['鳥取','島根','岡山','広島','山口'],
-  四国:['徳島','香川','愛媛','高知'],
-  九州沖縄:['福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'],
-};
 
-/* 北から順（右→左）47 都道府県 */
-const prefOrder = [
-  '北海道','青森','岩手','宮城','秋田','山形','福島','茨城','栃木','群馬',
-  '埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野',
-  '岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山',
-  '鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡',
-  '佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'
+/* 地方ごとの配列（左→右 表示） */
+const regionGroups = [
+  { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
+  { name:'関東',         list:['茨城','栃木','群馬','埼玉','千葉','東京','神奈川'] },
+  { name:'中部',         list:['新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知'] },
+  { name:'近畿',         list:['三重','滋賀','京都','大阪','兵庫','奈良','和歌山'] },
+  { name:'中国',         list:['鳥取','島根','岡山','広島','山口'] },
+  { name:'四国',         list:['徳島','香川','愛媛','高知'] },
+  { name:'九州沖縄',     list:['福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄'] },
 ];
 
-/* 5 列に並べるため行ごとに分割して各行を reverse ＝右→左表示 */
-const prefRows = [];
-for (let i = 0; i < prefOrder.length; i += 5) {
-  prefRows.push(prefOrder.slice(i, i + 5).reverse());
-}
+/* 共通スタイル */
+const labelStyle = { display:'inline-block', width:'22vw', fontSize:'3.8vw', margin:'0 0 .5vh' };
+const inputStyle = { width:'30%', padding:'.6vh 0', textAlign:'center',
+                     fontSize:'3.2vw', border:'1px solid #ccc', borderRadius:4 };
 
 /* ===== コンポーネント ===== */
 export default function App() {
-  const [size, setSize]             = useState(60);
-  const [pref, setPref]            = useState(null);
-  const [result, setResult]         = useState(null);
+  const [size, setSize]     = useState(60);
+  const [pref, setPref]     = useState(null);
+  const [result, setResult] = useState(null);
 
   const [showCustom, setShowCustom] = useState(false);
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });
@@ -74,40 +65,32 @@ export default function App() {
   }, [dims, showCustom]);
 
   /* ---- ハンドラ ---- */
-  const handleSize = s=>{
-    setSize(s);
-    if (s==='その他'){ setShowCustom(true); setResult(null); }
-    else             { setShowCustom(false); compare(pref,s); }
-  };
-  const handlePref = p => { setPref(p); compare(p,size); };
-
-  /* 個別入力：2 桁入力で次へフォーカス（値コピーバグなし） */
-  const handleInput = (key,nextRef) => e=>{
-    const val = e.target.value.slice(0,2);            // 3 桁以上カット
-    setDims(d=>({...d,[key]:val}));
-    if (val.length===2 && nextRef) nextRef.current?.focus();
+  const handleSize   = s => { setSize(s); s==='その他' ? (setShowCustom(true), setResult(null))
+                                                      : (setShowCustom(false), compare(pref,s)); };
+  const handlePref   = p => { setPref(p); compare(p,size); };
+  const handleInput  = (key,next) => e=>{
+      const v=e.target.value.slice(0,2); setDims(d=>({...d,[key]:v}));
+      if(v.length===2&&next) next.current?.focus();
   };
 
   /* ---- JSX ---- */
   return (
-    <div style={{
-      maxWidth:420,width:'100%',padding:'1vh 2vw',
-      fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif'
-    }}>
+    <div style={{ maxWidth:420, width:'100%', padding:'1vh 2vw',
+                  fontFamily:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif' }}>
       <h1 style={{fontSize:'5.3vw',margin:'0 0 1vh'}}>送料比較ツール</h1>
 
-      {/* 結果エリア */}
+      {/* 結果 */}
       <div style={{background:'#f0f0f0',padding:'1vh',minHeight:'8vh',marginBottom:'1vh',fontSize:'3.6vw'}}>
         {showCustom ? matches.length ? (()=>{const min=Math.min(...matches.map(m=>priceList[m]));return(
           <ul style={{margin:0,paddingLeft:'4vw'}}>
             {matches.map(m=>(
-              <li key={m} style={{listStyle:'disc'}}>
-                <span style={{fontWeight:priceList[m]===min?'bold':'normal'}}>
-                  {m}：{priceList[m].toLocaleString()}円
-                </span>
-              </li>))}
+              <li key={m}><span style={{fontWeight:priceList[m]===min?'bold':'normal'}}>
+                {m}：{priceList[m].toLocaleString()}円
+              </span></li>
+            ))}
           </ul>
-        );})() : <p>該当なし</p> : result ? <>
+        );})() : <p style={labelStyle}>該当なし</p>
+        : result ? <>
           <div style={{fontWeight:'bold'}}>
             最安: {result.cheapest}（
             {result.cheapest==='ヤマト'?result.yamato?.toLocaleString():result.sagawa?.toLocaleString()}円／
@@ -115,13 +98,13 @@ export default function App() {
           </div>
           <div style={{fontSize:'3vw'}}>
             ヤマト: {result.yamato!=null?result.yamato.toLocaleString()+'円':'―円'}／
-            佐川: {result.sagawa!=null?result.sagawa.toLocaleString()+'円':'―円'}
+            佐川:   {result.sagawa!=null?result.sagawa.toLocaleString()+'円':'―円'}
           </div>
-        </> : <p>サイズと都道府県を選択</p>}
+        </> : <p style={labelStyle}>サイズと都道府県を選択</p>}
       </div>
 
-      {/* サイズボタン */}
-      <p style={{margin:'0 0 .5vh',fontSize:'3.8vw'}}>サイズ：</p>
+      {/* サイズ */}
+      <p style={labelStyle}>サイズ：</p>
       <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
         {sizes.map(s=>(
           <button key={s} onClick={()=>handleSize(s)} style={{
@@ -133,46 +116,39 @@ export default function App() {
         ))}
       </div>
 
-      {/* カスタム入力欄（常設・visibility 切替で高さ保持） */}
+      {/* カスタム入力 */}
       <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
-        <p style={{margin:'0 0 .3vh',fontSize:'3.8vw'}}>縦×横×高さ(cm)：</p>
+        <p style={labelStyle}>縦×横×高さ(cm)：</p>
         <div style={{display:'flex',gap:'1vw'}}>
           <input ref={lRef} type="number" placeholder="縦" value={dims.l}
-            onChange={handleInput('l', wRef)}
-            style={inputStyle} />
+            onChange={handleInput('l', wRef)} style={inputStyle}/>
           <input ref={wRef} type="number" placeholder="横" value={dims.w}
-            onChange={handleInput('w', hRef)}
-            style={inputStyle} />
+            onChange={handleInput('w', hRef)} style={inputStyle}/>
           <input ref={hRef} type="number" placeholder="高さ" value={dims.h}
-            onChange={handleInput('h', null)}
-            style={inputStyle} />
+            onChange={handleInput('h', null)} style={inputStyle}/>
         </div>
       </div>
 
-      {/* 都道府県ボタン（5 列・左寄せ） */}
-      <p style={{margin:'0 0 .5vh',fontSize:'3.8vw'}}>都道府県：</p>
-      {prefRows.map((row,i)=>(
-        <div key={i} style={{display:'flex',gap:'1vw',marginBottom:'1vh'}}>
-          {row.map(p=>{
-            const region = Object.keys(regionMap).find(r=>regionMap[r].includes(p));
-            return (
-              <button key={p} onClick={()=>handlePref(p)} style={{
-                width:'18%',padding:'.6vh 0',
-                background:regionColors[region]||'#ccc',
-                color:p===pref?'#fff':'#000',
-                border:p===pref?'2px solid #000':'0',
-                borderRadius:4,fontSize:'2.7vw'
-              }}>{p}</button>
-            );
-          })}
+      {/* 都道府県 */}
+      <p style={labelStyle}>都道府県：</p>
+      {regionGroups.map(({name,list})=>(
+        <div key={name} style={{marginBottom:'1vh'}}>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'1vw'}}>
+            {list.map(p=>{
+              const region = Object.keys(regionColors).find(r=>name.includes(r)) || '北海道';
+              return (
+                <button key={p} onClick={()=>handlePref(p)} style={{
+                  width:'18%',padding:'.6vh 0',
+                  background:regionColors[region],
+                  color:p===pref?'#fff':'#000',
+                  border:p===pref?'2px solid #000':'0',
+                  borderRadius:4,fontSize:'2.7vw'
+                }}>{p}</button>
+              );
+            })}
+          </div>
         </div>
       ))}
     </div>
   );
 }
-
-/* 共通 input スタイル */
-const inputStyle = {
-  width:'30%',padding:'.6vh 0',textAlign:'center',
-  fontSize:'3.2vw',border:'1px solid #ccc',borderRadius:4
-};
