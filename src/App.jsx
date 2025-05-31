@@ -70,30 +70,6 @@ export default function App() {
     return '#ccc';
   };
 
-  useEffect(() => {
-    if (selectedSize === 'その他') {
-      const h = parseFloat(customHeight);
-      const w = parseFloat(customWidth);
-      const d = parseFloat(customDepth);
-      if (!isNaN(h) && !isNaN(w) && !isNaN(d)) {
-        const dims = [h, w, d].sort((a, b) => b - a); // 高さ, 横, 縦の順で比較
-        const [max, mid, min] = dims;
-
-        if (max <= 34 && mid <= 25 && min <= 3) {
-          setMatchedService('ゆうパケット');
-        } else if (max <= 24 && mid <= 17 && min <= 7) {
-          setMatchedService('ゆうパケットプラス');
-        } else if (max <= 25 && mid <= 20 && min <= 5) {
-          setMatchedService('宅急便コンパクト');
-        } else {
-          setMatchedService('該当なし');
-        }
-      } else {
-        setMatchedService('');
-      }
-    }
-  }, [customHeight, customWidth, customDepth, selectedSize]);
-
   return (
     <div style={{ padding: 10, maxWidth: 420, margin: '0 auto', fontFamily: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif' }}>
       <h1>送料比較ツール</h1>
