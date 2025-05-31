@@ -120,46 +120,44 @@ export default function App() {
       <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',marginBottom:'1vh'}}>
         {sizes.map(s=>(
           <button key={s} onClick={()=>handleSizeClick(s)} style={{
-            width:'18%', padding:'.7vh 0',
+            width:'18%', padding:'.6vh 0',
             background:s===size?'#0070f3':'#eee', color:s===size?'#fff':'#000',
-            border:0,borderRadius:4,fontSize:'3.2vw'
+            border:0,borderRadius:4,fontSize:'3vw'
           }}>{s}</button>
         ))}
       </div>
 
-      {/* カスタム入力 */}
-      {showCustom && (
-        <>
-          <p style={{margin:'0 0 .5vh',fontSize:'4vw'}}>縦×横×高さ(cm)：</p>
-          <div style={{display:'flex',gap:'1vw',marginBottom:'1vh'}}>
-            <input ref={lRef} type="number" placeholder="縦" value={dims.l}
-              onChange={e=>onDimChange('l',e.target.value)}
-              style={{width:'30%',padding:'.7vh 0',fontSize:'3.5vw',textAlign:'center',
-              border:'1px solid #ccc',borderRadius:4}} />
-            <input ref={wRef} type="number" placeholder="横" value={dims.w}
-              onChange={e=>onDimChange('w',e.target.value)}
-              style={{width:'30%',padding:'.7vh 0',fontSize:'3.5vw',textAlign:'center',
-              border:'1px solid #ccc',borderRadius:4}} />
-            <input ref={hRef} type="number" placeholder="高さ" value={dims.h}
-              onChange={e=>setDims(prev=>({...prev,h:e.target.value}))}
-              style={{width:'30%',padding:'.7vh 0',fontSize:'3.5vw',textAlign:'center',
-              border:'1px solid #ccc',borderRadius:4}} />
-          </div>
-        </>
-      )}
+      {/* カスタム入力（常駐・visibility 切替） */}
+      <div style={{minHeight:'5.5vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
+        <p style={{margin:'0 0 .3vh',fontSize:'4vw'}}>縦×横×高さ(cm)：</p>
+        <div style={{display:'flex',gap:'1vw'}}>
+          <input ref={lRef} type="number" placeholder="縦" value={dims.l}
+            onChange={e=>onDimChange('l',e.target.value)}
+            style={{width:'30%',padding:'.6vh 0',fontSize:'3.2vw',textAlign:'center',
+            border:'1px solid #ccc',borderRadius:4}} />
+          <input ref={wRef} type="number" placeholder="横" value={dims.w}
+            onChange={e=>onDimChange('w',e.target.value)}
+            style={{width:'30%',padding:'.6vh 0',fontSize:'3.2vw',textAlign:'center',
+            border:'1px solid #ccc',borderRadius:4}} />
+          <input ref={hRef} type="number" placeholder="高さ" value={dims.h}
+            onChange={e=>setDims(prev=>({...prev,h:e.target.value}))}
+            style={{width:'30%',padding:'.6vh 0',fontSize:'3.2vw',textAlign:'center',
+            border:'1px solid #ccc',borderRadius:4}} />
+        </div>
+      </div>
 
       {/* 都道府県 */}
       <p style={{margin:'0 0 .5vh',fontSize:'4vw'}}>都道府県：</p>
-      <div style={{display:'flex',flexWrap:'wrap',gap:'1vw'}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'1vw',direction:'rtl',justifyContent:'flex-start'}}>
         {prefOrder.map(p=>{
           const region = Object.keys(regionMap).find(r=>regionMap[r].includes(p));
           return (
             <button key={p} onClick={()=>handlePrefClick(p)} style={{
-              width:'18%', padding:'.7vh 0', marginBottom:'1vh',
+              width:'18%', padding:'.6vh 0', marginBottom:'1vh',
               background:regionColors[region]||'#ccc',
               color:p===prefecture?'#fff':'#000',
               border:p===prefecture?'2px solid #000':'0',
-              borderRadius:4,fontSize:'3vw'
+              borderRadius:4,fontSize:'2.8vw',direction:'ltr'
             }}>{p}</button>
           );
         })}
