@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import yamatoData from './yamatoData.json';
 import sagawaData from './sagawaData.json';
 
@@ -11,7 +11,6 @@ const regionColors = {
   近畿:'#81d4fa', 中国:'#f44336', 四国:'#ba68c8', 九州沖縄:'#f48fb1',
 };
 
-/* 地方ごとの配列（左→右 表示） */
 const regionGroups = [
   { name:'北海道・東北', list:['北海道','青森','岩手','宮城','秋田','山形','福島'] },
   { name:'関東',         list:['茨城','栃木','群馬','埼玉','千葉','東京','神奈川'] },
@@ -37,10 +36,6 @@ export default function App() {
   const [dims, setDims]             = useState({ l:'', w:'', h:'' });
   const [matches, setMatches]       = useState([]);
 
-  const lRef = useRef(null);
-  const wRef = useRef(null);
-  const hRef = useRef(null);
-
   /* ---- 通常サイズ比較 ---- */
   const compare = (p = pref, s = size) => {
     if (typeof s !== 'number') return;
@@ -65,12 +60,15 @@ export default function App() {
   }, [dims, showCustom]);
 
   /* ---- ハンドラ ---- */
-  const handleSize   = s => { setSize(s); s==='その他' ? (setShowCustom(true), setResult(null))
-                                                      : (setShowCustom(false), compare(pref,s)); };
-  const handlePref   = p => { setPref(p); compare(p,size); };
-  const handleInput  = (key,next) => e=>{
-      const v=e.target.value.slice(0,2); setDims(d=>({...d,[key]:v}));
-      if(v.length===2&&next) next.current?.focus();
+  const handleSize = s=>{
+    setSize(s);
+    if (s==='その他'){ setShowCustom(true); setResult(null); }
+    else             { setShowCustom(false); compare(pref,s); }
+  };
+  const handlePref = p => { setPref(p); compare(p,size); };
+  const handleInput = key => e=>{
+    const v=e.target.value.slice(0,2);              // 3桁以上はカット
+    setDims(d=>({...d,[key]:v}));
   };
 
   /* ---- JSX ---- */
@@ -120,12 +118,12 @@ export default function App() {
       <div style={{minHeight:'6vh',visibility:showCustom?'visible':'hidden',marginBottom:'1vh'}}>
         <p style={labelStyle}>縦×横×高さ(cm)：</p>
         <div style={{display:'flex',gap:'1vw'}}>
-          <input ref={lRef} type="number" placeholder="縦" value={dims.l}
-            onChange={handleInput('l', wRef)} style={inputStyle}/>
-          <input ref={wRef} type="number" placeholder="横" value={dims.w}
-            onChange={handleInput('w', hRef)} style={inputStyle}/>
-          <input ref={hRef} type="number" placeholder="高さ" value={dims.h}
-            onChange={handleInput('h', null)} style={inputStyle}/>
+          <input type="number" placeholder="縦" value={dims.l}
+            onChange={handleInput('l')} style={inputStyle}/>
+          <input type="number" placeholder="横" value={dims.w}
+            onChange={handleInput('w')} style={inputStyle}/>
+          <input type="number" placeholder="高さ" value={dims.h}
+            onChange={handleInput('h')} style={inputStyle}/>
         </div>
       </div>
 
@@ -134,18 +132,15 @@ export default function App() {
       {regionGroups.map(({name,list})=>(
         <div key={name} style={{marginBottom:'1vh'}}>
           <div style={{display:'flex',flexWrap:'wrap',gap:'1vw'}}>
-            {list.map(p=>{
-              const region = Object.keys(regionColors).find(r=>name.includes(r)) || '北海道';
-              return (
-                <button key={p} onClick={()=>handlePref(p)} style={{
-                  width:'18%',padding:'.6vh 0',
-                  background:regionColors[region],
-                  color:p===pref?'#fff':'#000',
-                  border:p===pref?'2px solid #000':'0',
-                  borderRadius:4,fontSize:'2.7vw'
-                }}>{p}</button>
-              );
-            })}
+            {list.map(p=>(
+              <button key={p} onClick={()=>handlePref(p)} style={{
+                width:'18%',padding:'.6vh 0',
+                background:regionColors[name.split('・')[0]]||'#ccc',
+                color:p===pref?'#fff':'#000',
+                border:p===pref?'2px solid #000':'0',
+                borderRadius:4,fontSize:'2.7vw'
+              }}>{p}</button>
+            ))}
           </div>
         </div>
       ))}
