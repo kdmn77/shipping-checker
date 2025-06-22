@@ -88,6 +88,8 @@ export default function App() {
   /* --- ハンドラ --- */
   const handleSize = s => { setSize(s); setShowCustom(s === 'パケット系'); };
   const handlePref = p => setPref(p);
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // ← これを追加
+
   const handleInput = k => e => {
     let v=e.target.value.replace(/\D/g,'');
     v = k==='h' ? v.slice(0,1) : v.slice(0,2);
