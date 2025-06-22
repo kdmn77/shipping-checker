@@ -212,6 +212,7 @@ export default function App() {
                 const sel=p===pref;
                 return(
                   <button key={p} onClick={()=>handlePref(p)}
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     className="pref-btn"
                     style={{
                       width:'18%',padding:'1.2vh 0',
