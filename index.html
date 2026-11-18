@@ -31,19 +31,22 @@ section{margin:0}
 .best{font-size:26px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
 .sub{color:#bdbdbd;font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
 .rows{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.row{flex:1 1 120px;background:#262626;border-radius:10px;padding:8px 12px;font-size:13px;color:#cfcfcf;font-variant-numeric:tabular-nums}
+[data-c="ヤマト"]{--c:#ffd400;--ct:#111111}
+[data-c="佐川"]{--c:#0a3fa8;--ct:#ffffff}
+[data-c="日本郵便"]{--c:#d7000f;--ct:#ffffff}
+.row{flex:1 1 120px;background:#262626;border-left:6px solid var(--c,#555);border-radius:10px;padding:8px 12px;font-size:13px;color:#cfcfcf;font-variant-numeric:tabular-nums}
 .row b{display:block;font-size:19px;color:#fff}
-.row.win{background:#fff;color:var(--ink)}
-.row.win b{color:var(--accent)}
-.tag{display:inline-block;font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px;font-weight:700}
+.row.win{background:var(--c,#fff);color:var(--ct,#111);border-left-color:var(--c,#fff)}
+.row.win b{color:var(--ct,#111)}
+.tag{display:inline-block;font-size:11px;background:#111;color:#fff;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px;font-weight:700}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
 #sizes,.region .btns{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:8px}
 #sizes button:last-child{grid-column:span 2}
 button,.linkbtn{font:inherit;font-weight:600;border:0;background:var(--chip);color:var(--ink);border-radius:10px;padding:11px 8px;cursor:pointer;text-align:center;text-decoration:none;display:inline-block;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 button[aria-pressed="true"]{background:var(--ink);color:#fff}
-button:focus-visible,.linkbtn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,.linkbtn:focus-visible,input:focus-visible{outline:2px solid #111;outline-offset:2px}
 button:disabled{opacity:.5}
-.primary{background:var(--accent);color:var(--accent-ink);font-weight:800;padding:11px 20px}
+.primary{background:var(--ink);color:#fff;font-weight:800;padding:11px 20px}
 .region{padding:12px 0;border-top:1px solid var(--line)}
 .region:first-of-type{border-top:0;padding-top:0}
 .region span{display:block;color:var(--mute);font-size:12px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
@@ -62,16 +65,17 @@ ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 li:first-child{border-top:0}
 #scan{margin-top:12px;gap:8px}
-#scan li{border:0;background:var(--chip);border-radius:10px;padding:10px 12px}
-#scan li.hit{background:var(--ink);color:#fff}
-#scan li.hit .meta{color:#fff;font-weight:700}
-#scan li.hit button,#scan li.hit .linkbtn{background:#333;color:#fff}
-#scan li.hit button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+#scan li{border:0;border-left:8px solid var(--c);background:var(--chip);border-radius:10px;padding:10px 12px}
+#scan li.hit{background:var(--c);color:var(--ct)}
+#scan li.hit .meta{color:var(--ct);font-weight:700}
+#scan li.hit button,#scan li.hit .linkbtn{background:#fff;color:#111}
+#scan li.hit button[aria-pressed="true"]{background:#111;color:#fff}
 #scan li:not(.hit) button,#scan li:not(.hit) .linkbtn{background:#fff}
 #scan li:not(.hit) button[aria-pressed="true"]{background:var(--ink);color:#fff}
 #scan li .meta{flex:1 1 55%}
 #scan:empty{display:none}
 li .name{font-weight:800;font-variant-numeric:tabular-nums}
+.cb{display:inline-block;background:var(--c);color:var(--ct);font-size:12px;border-radius:6px;padding:2px 8px;margin-right:8px}
 li .meta{color:var(--mute);font-size:13px;flex:1 1 140px}
 li button,li .linkbtn{padding:7px 12px;font-size:13px;border-radius:8px}
 [hidden]{display:none!important}
@@ -140,6 +144,7 @@ const PREF_GROUPS=[
  ["四国",["徳島","香川","愛媛","高知"]],
  ["九州・沖縄",["福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島","沖縄"]]];
 const SIZES=[60,80,100,120,140,160,170,180,200,220,240,260,"パケット系"];
+const PACKET_CARRIER={レターパックライト:"日本郵便",レターパックプラス:"日本郵便",クリックポスト:"日本郵便",ネコポス:"ヤマト",宅急便コンパクト:"ヤマト",ゆうパケット:"日本郵便",ゆうパケットプラス:"日本郵便"};
 const PACKET={レターパックライト:430,レターパックプラス:600,クリックポスト:185,ネコポス:385,宅急便コンパクト:770,ゆうパケット:360,ゆうパケットプラス:520};
 const CARRIERS=["ヤマト","佐川","日本郵便"];
 const FULL={ヤマト:"ヤマト運輸",佐川:"佐川急便",日本郵便:"日本郵便"};
@@ -160,7 +165,7 @@ function resultBox(best,sub,rows){
   const box=[el("div",{className:"best",textContent:best}),el("div",{className:"sub",textContent:sub})];
   if(rows&&rows.length)box.push(el("div",{className:"rows"},rows.map(r=>{
     const d=el("div",{className:"row"+(r.win?" win":"")},[el("div",{textContent:r.name}),el("b",{textContent:r.price==null?"取扱なし":yen(r.price)})]);
-    if(r.win)d.firstChild.append(el("span",{className:"tag",textContent:"最安"}));return d;})));
+    d.dataset.c=r.carrier||r.name;if(r.win)d.firstChild.append(el("span",{className:"tag",textContent:"最安"}));return d;})));
   $("result").replaceChildren(...box);
 }
 function render(){
@@ -180,7 +185,7 @@ function render(){
     if(a<=24&&b<=17&&c<=7)ok.push("ゆうパケットプラス");
     if(!ok.length){resultBox("該当なし","この寸法で送れるパケット系はありません。宅配便サイズを選んでください");return;}
     ok.sort((x,y)=>PACKET[x]-PACKET[y]);
-    resultBox("最安 "+ok[0]+" "+yen(PACKET[ok[0]]),v.join("×")+" cm",ok.map((n,i)=>({name:n,price:PACKET[n],win:i===0})));
+    resultBox("最安 "+ok[0]+" "+yen(PACKET[ok[0]]),v.join("×")+" cm",ok.map((n,i)=>({name:n,carrier:PACKET_CARRIER[n],price:PACKET[n],win:i===0})));
     return;
   }
   if(!st.pref){resultBox();return;}
@@ -207,7 +212,7 @@ function drawScan(){
     const name=el("span",{className:"name",textContent:c});
     if(r?.found)name.append(el("span",{className:"tag",textContent:"記録あり"}));
     const pick=pressBtn("この会社",st.carrier===c,()=>{st.carrier=c;drawScan();});
-    return el("li",{className:r?.found?"hit":""},[name,el("span",{className:"meta",textContent:text}),pick,openBtn(c,s.number)]);
+    const li=el("li",{className:r?.found?"hit":""},[name,el("span",{className:"meta",textContent:text}),pick,openBtn(c,s.number)]);li.dataset.c=c;return li;
   }));
 }
 async function scan(){
@@ -248,7 +253,8 @@ function drawHistory(){
     const again=el("button",{type:"button",textContent:"状況を確認"});
     again.onclick=()=>{$("trackNo").value=h.n;$("memo").value=h.m||"";scan();$("trackForm").scrollIntoView({behavior:"smooth",block:"center"});};
     const del=el("button",{type:"button",textContent:"削除"});del.onclick=()=>{hist.splice(i,1);persist();drawHistory();};
-    return el("li",{},[el("span",{className:"name",textContent:h.c+" "+h.n}),el("span",{className:"meta",textContent:[h.d,h.m].filter(Boolean).join("　")}),again,openBtn(h.c,h.n,"公式"),del]);
+    const badge=el("span",{className:"cb",textContent:h.c});badge.dataset.c=h.c;
+    return el("li",{},[el("span",{className:"name"},[badge,h.n]),el("span",{className:"meta",textContent:[h.d,h.m].filter(Boolean).join("　")}),again,openBtn(h.c,h.n,"公式"),del]);
   }));
 }
 function needCarrier(){
