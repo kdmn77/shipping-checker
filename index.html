@@ -1,12 +1,265 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>送料比較ツール</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>送料比較と追跡</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="送料と追跡">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f4f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<style>
+/* layout: 1カラムの作業ツール。上に送料の結果、サイズと都道府県、下に問い合わせ番号と履歴 */
+:root{
+  --bg:#f4f4f3; --panel:#ffffff; --ink:#161616; --mute:#6b6b6b; --line:#d9d9d7; --chip:#ececea;
+  --accent:#d0121b; --accent-ink:#ffffff;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141414; --panel:#1f1f1f; --ink:#f1f1f0; --mute:#a3a3a1; --line:#3a3a39; --chip:#2b2b2a;
+    --accent:#ff4a52; --accent-ink:#141414; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;
+  padding:calc(16px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+h1{font-size:19px;margin:0;letter-spacing:.02em}
+h2{font-size:13px;margin:0 0 8px;color:var(--mute);font-weight:600;letter-spacing:.08em}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+.result{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:2;border-left:5px solid var(--accent)}
+.best{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.sub{color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.rows{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.row{flex:1 1 130px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-variant-numeric:tabular-nums}
+.row.win{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.row b{font-size:16px}
+.tag{display:inline-block;font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:3px;padding:0 6px;margin-left:6px;vertical-align:2px;font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button,.linkbtn{font:inherit;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:6px;padding:8px 11px;cursor:pointer;min-width:50px;text-align:center;text-decoration:none;display:inline-block;touch-action:manipulation}
+button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+button:focus-visible,.linkbtn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.5}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.region{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:start;padding:6px 0;border-top:1px solid var(--line)}
+.region:first-of-type{border-top:0}
+.region span{color:var(--mute);font-size:12px;padding-top:9px}
+input{font:inherit;font-size:16px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+.dims{display:flex;gap:6px;margin-top:10px}
+.dims input{width:90px}
+.search{display:flex;gap:6px}
+.search input{flex:1}
+.field{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.field label{font-size:12px;color:var(--mute)}
+.note{font-size:12px;color:var(--mute);margin:8px 0 0}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+li.hit{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+li .name{font-weight:600;font-variant-numeric:tabular-nums}
+li .meta{color:var(--mute);font-size:13px;flex:1 1 140px}
+li.hit .meta{color:var(--ink)}
+li button,li .linkbtn{padding:4px 10px;min-width:0;font-size:13px}
+#scan{margin-top:10px}
+[hidden]{display:none!important}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+<main>
+  <h1>送料比較と追跡</h1>
+
+  <section class="result" aria-live="polite"><div id="result"></div></section>
+
+  <section>
+    <h2>サイズ</h2>
+    <div class="btns" id="sizes"></div>
+    <div class="dims" id="dims" hidden>
+      <input id="dl" type="number" inputmode="decimal" placeholder="縦 cm" aria-label="縦 cm">
+      <input id="dw" type="number" inputmode="decimal" placeholder="横 cm" aria-label="横 cm">
+      <input id="dh" type="number" inputmode="decimal" placeholder="厚み cm" aria-label="厚み cm">
+    </div>
+  </section>
+
+  <section id="prefSection">
+    <h2>都道府県</h2>
+    <div id="prefs"></div>
+  </section>
+
+  <section>
+    <h2>問い合わせ番号（追跡）</h2>
+    <form class="search" id="trackForm">
+      <input id="trackNo" inputmode="numeric" autocomplete="off" placeholder="番号を入力（ハイフンあり・なし可）" aria-label="問い合わせ番号">
+      <button class="primary" id="go" type="submit">調べる</button>
+    </form>
+    <p class="note" id="msg" aria-live="polite">ヤマト・佐川・日本郵便の3社を同時に調べ、記録のある会社を自動で見つけます。</p>
+    <ul id="scan"></ul>
+    <div class="field"><label for="memo">メモ（宛先など・任意）</label><input id="memo" autocomplete="off" placeholder="例 〇〇商店 11/18発送"></div>
+    <div class="btns" style="margin-top:10px">
+      <button id="save" type="button">履歴に残す</button>
+      <button id="copyInfo" type="button">お客様向け案内文をコピー</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>発送履歴</h2>
+    <ul id="history"></ul>
+    <p class="note">履歴はこの端末のこのアプリ内だけに保存されます。ほかの端末とは共有されません。</p>
+  </section>
+</main>
+
+<!-- ヤマトの追跡ページは番号を送信する形でしか開けないため、隠しフォームで開く -->
+<form id="yamatoForm" method="post" action="https://toi.kuronekoyamato.co.jp/cgi-bin/tneko" target="_blank" hidden>
+  <input type="hidden" name="number00" value="1"><input type="hidden" name="number01" id="yamatoNo">
+</form>
+
+<script type="module">
+import yamatoData from './src/yamatoData.json';
+import sagawaData from './src/sagawaData.json';
+
+const RATES={ヤマト:yamatoData,佐川:sagawaData};
+const PREF_GROUPS=[
+ ["北海道・東北",["北海道","青森","岩手","宮城","秋田","山形","福島"]],
+ ["関東",["東京","茨城","栃木","群馬","埼玉","千葉","神奈川"]],
+ ["中部",["新潟","富山","石川","福井","山梨","長野","岐阜","静岡","愛知"]],
+ ["近畿",["大阪","三重","滋賀","京都","兵庫","奈良","和歌山"]],
+ ["中国",["鳥取","島根","岡山","広島","山口"]],
+ ["四国",["徳島","香川","愛媛","高知"]],
+ ["九州・沖縄",["福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島","沖縄"]]];
+const SIZES=[60,80,100,120,140,160,170,180,200,220,240,260,"パケット系"];
+const PACKET={レターパックライト:430,レターパックプラス:600,クリックポスト:185,ネコポス:385,宅急便コンパクト:770,ゆうパケット:360,ゆうパケットプラス:520};
+const CARRIERS=["ヤマト","佐川","日本郵便"];
+const FULL={ヤマト:"ヤマト運輸",佐川:"佐川急便",日本郵便:"日本郵便"};
+const TRACK_URL={
+ ヤマト:()=>"https://toi.kuronekoyamato.co.jp/cgi-bin/tneko",
+ 佐川:n=>"https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo="+n,
+ 日本郵便:n=>"https://trackings.post.japanpost.jp/services/srv/search/direct?reqCodeNo1="+n+"&searchKind=S002&locale=ja"};
+
+const $=id=>document.getElementById(id), yen=n=>n.toLocaleString("ja-JP")+"円";
+const el=(tag,props={},kids=[])=>{const e=Object.assign(document.createElement(tag),props);kids.forEach(k=>e.append(k));return e;};
+const price=(c,size,pref)=>RATES[c]?.[size]?.[pref]??null;
+const st={size:60,pref:null,carrier:null,scan:null};
+
+/* ===== 送料比較 ===== */
+function pressBtn(label,on,fn){const b=el("button",{type:"button",textContent:label});b.setAttribute("aria-pressed",on);b.onclick=fn;return b;}
+function resultBox(best,sub,rows){
+  const box=[el("div",{className:"best",textContent:best}),el("div",{className:"sub",textContent:sub})];
+  if(rows&&rows.length)box.push(el("div",{className:"rows"},rows.map(r=>{
+    const d=el("div",{className:"row"+(r.win?" win":"")},[el("div",{textContent:r.name}),el("b",{textContent:r.price==null?"取扱なし":yen(r.price)})]);
+    if(r.win)d.firstChild.append(el("span",{className:"tag",textContent:"最安"}));return d;})));
+  $("result").replaceChildren(...box);
+}
+function render(){
+  $("sizes").replaceChildren(...SIZES.map(s=>pressBtn(s,s===st.size,()=>{st.size=s;render();})));
+  $("prefs").replaceChildren(...PREF_GROUPS.map(([name,list])=>el("div",{className:"region"},[el("span",{textContent:name}),
+    el("div",{className:"btns"},list.map(p=>pressBtn(p,p===st.pref,()=>{st.pref=p;render();})))])));
+  const packet=st.size==="パケット系";
+  $("dims").hidden=!packet; $("prefSection").hidden=packet;
+  if(packet){
+    const v=[$("dl").value,$("dw").value,$("dh").value].map(Number);
+    if(v.some(x=>!x)){resultBox("縦・横・厚みを入力","パケット系は全国一律料金です");return;}
+    const [a,b,c]=[...v].sort((x,y)=>y-x),sum=a+b+c,ok=[];
+    if(a<=34&&b<=25&&c<=3)ok.push("レターパックライト","レターパックプラス","クリックポスト");
+    if(a<=32&&b<=23&&c<=3)ok.push("ネコポス");
+    if(a<=34&&b<=25&&c<=5)ok.push("宅急便コンパクト");
+    if(sum<=60&&a<=34&&c<=3)ok.push("ゆうパケット");
+    if(a<=24&&b<=17&&c<=7)ok.push("ゆうパケットプラス");
+    if(!ok.length){resultBox("該当なし","この寸法で送れるパケット系はありません。宅配便サイズを選んでください");return;}
+    ok.sort((x,y)=>PACKET[x]-PACKET[y]);
+    resultBox("最安 "+ok[0]+" "+yen(PACKET[ok[0]]),v.join("×")+" cm",ok.map((n,i)=>({name:n,price:PACKET[n],win:i===0})));
+    return;
+  }
+  if(!st.pref){resultBox("サイズと都道府県を選択","ヤマトと佐川の料金を比べます");return;}
+  const y=price("ヤマト",st.size,st.pref),s=price("佐川",st.size,st.pref);
+  if(y==null&&s==null){resultBox("取扱なし",st.size+"サイズ／"+st.pref+" はどちらも料金表にありません");return;}
+  const win=y==null?"佐川":s==null?"ヤマト":y<s?"ヤマト":s<y?"佐川":"同額";
+  const diff=y!=null&&s!=null&&y!==s?"　差額 "+yen(Math.abs(y-s)):"";
+  resultBox("最安 "+win+" "+yen(Math.min(y??Infinity,s??Infinity)),st.size+"サイズ／"+st.pref+diff,
+    [{name:"ヤマト",price:y,win:win==="ヤマト"},{name:"佐川",price:s,win:win==="佐川"}]);
+}
+
+/* ===== 追跡 ===== */
+const cleanNo=()=>$("trackNo").value.replace(/[^0-9A-Za-z]/g,"");
+const say=t=>{$("msg").textContent=t;};
+function openBtn(carrier,no,label="公式ページ"){
+  if(carrier==="ヤマト"){const b=el("button",{type:"button",textContent:label});b.onclick=()=>{$("yamatoNo").value=no;$("yamatoForm").submit();};return b;}
+  return el("a",{className:"linkbtn",textContent:label,href:TRACK_URL[carrier](no),target:"_blank",rel:"noopener"});
+}
+function drawScan(){
+  const s=st.scan; if(!s){$("scan").replaceChildren();return;}
+  $("scan").replaceChildren(...CARRIERS.map(c=>{
+    const r=s.results?.find(x=>x.carrier===c);
+    const text=!s.results?(s.failed?"自動で調べられませんでした":"調べています…"):r?.error?"確認できず（"+r.error+"）":r?.found?[r.status,r.detail].filter(Boolean).join("　"):"記録なし";
+    const name=el("span",{className:"name",textContent:c});
+    if(r?.found)name.append(el("span",{className:"tag",textContent:"記録あり"}));
+    const pick=pressBtn("この会社",st.carrier===c,()=>{st.carrier=c;drawScan();});
+    return el("li",{className:r?.found?"hit":""},[name,el("span",{className:"meta",textContent:text}),pick,openBtn(c,s.number)]);
+  }));
+}
+async function scan(){
+  const no=cleanNo();
+  if(no.length<8||no.length>14){say("問い合わせ番号は8〜14桁で入力してください。");return;}
+  st.scan={number:no};st.carrier=null;drawScan();$("go").disabled=true;say("3社に問い合わせています…");
+  try{
+    const res=await fetch("/api/track?no="+encodeURIComponent(no));
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||"エラー");
+    st.scan=data;
+    const hits=data.results.filter(r=>r.found);
+    st.carrier=hits[0]?.carrier??null;
+    say(hits.length===1?FULL[hits[0].carrier]+" の荷物です。":hits.length>1?"複数の会社で記録が見つかりました。該当する会社を「この会社」で選んでください。"
+      :"どの会社にも記録が見つかりませんでした。発送直後は反映まで時間がかかることがあります。");
+  }catch(e){
+    st.scan={number:no,failed:true};
+    say("自動で調べられませんでした。下の「公式ページ」から各社の追跡ページを開いて確認してください。");
+  }
+  $("go").disabled=false;drawScan();
+}
+async function copy(text,done){
+  try{await navigator.clipboard.writeText(text);say(done);}
+  catch(e){say("コピーできませんでした： "+text);}
+}
+function guide(carrier,no){
+  const url=carrier==="ヤマト"?TRACK_URL.ヤマト():TRACK_URL[carrier](no);
+  return FULL[carrier]+"\nお問い合わせ番号："+no+"\n追跡ページ："+url;
+}
+
+/* ===== 履歴 ===== */
+let hist=[];
+try{hist=JSON.parse(localStorage.getItem("ship-history")||"[]");}catch(e){}
+const persist=()=>{try{localStorage.setItem("ship-history",JSON.stringify(hist));}catch(e){}};
+function drawHistory(){
+  if(!hist.length){$("history").replaceChildren(el("li",{},[el("span",{className:"meta",textContent:"まだ履歴はありません。番号を調べて「履歴に残す」を押すとここに並びます。"})]));return;}
+  $("history").replaceChildren(...hist.map((h,i)=>{
+    const again=el("button",{type:"button",textContent:"状況を確認"});
+    again.onclick=()=>{$("trackNo").value=h.n;$("memo").value=h.m||"";scan();$("trackForm").scrollIntoView({behavior:"smooth",block:"center"});};
+    const del=el("button",{type:"button",textContent:"削除"});del.onclick=()=>{hist.splice(i,1);persist();drawHistory();};
+    return el("li",{},[el("span",{className:"name",textContent:h.c+" "+h.n}),el("span",{className:"meta",textContent:[h.d,h.m].filter(Boolean).join("　")}),again,openBtn(h.c,h.n,"公式"),del]);
+  }));
+}
+function needCarrier(){
+  const no=cleanNo();
+  if(!no){say("先に問い合わせ番号を入力してください。");return null;}
+  if(!st.carrier||st.scan?.number!==no){say("先に「調べる」を押すか、運送会社を「この会社」で選んでください。");if(st.scan?.number!==no){st.scan={number:no,failed:true};st.carrier=null;drawScan();}return null;}
+  return {no,carrier:st.carrier};
+}
+$("trackForm").addEventListener("submit",e=>{e.preventDefault();$("trackNo").blur();scan();});
+["dl","dw","dh"].forEach(id=>$(id).addEventListener("input",render));
+$("copyInfo").onclick=()=>{const t=needCarrier();if(t)copy(guide(t.carrier,t.no),"案内文をコピーしました。メールにそのまま貼れます。");};
+$("save").onclick=()=>{
+  const t=needCarrier();if(!t)return;
+  const d=new Date();
+  hist=hist.filter(h=>!(h.n===t.no&&h.c===t.carrier));
+  hist.unshift({c:t.carrier,n:t.no,m:$("memo").value.trim(),d:(d.getMonth()+1)+"/"+d.getDate()});
+  hist=hist.slice(0,100);persist();drawHistory();
+  $("trackNo").value="";$("memo").value="";st.scan=null;st.carrier=null;drawScan();say("履歴に残しました。");
+};
+render();drawHistory();
+</script>
 </body>
 </html>
