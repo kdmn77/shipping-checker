@@ -25,6 +25,8 @@ async function getHtml(url, init = {}, encoding = 'utf-8') {
 const strip = (s) =>
   (s || '')
     .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
@@ -40,7 +42,7 @@ function parseYamato(html) {
 
 function parseSagawa(html) {
   const state = strip((html.match(/class="state"[^>]*>([\s\S]*?)<\/span>/) || [])[1]);
-  if (!state) throw new Error('ページを読み取れませんでした: ' + strip(html).slice(0, 160));
+  if (!state) throw new Error('ページを読み取れませんでした');
   const found = !/該当なし/.test(state);
   return { found, status: state.replace(/^[↓⇒→\s]+/, ''), detail: '' };
 }
