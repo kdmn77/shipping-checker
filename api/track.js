@@ -40,7 +40,7 @@ function parseYamato(html) {
 
 function parseSagawa(html) {
   const state = strip((html.match(/class="state"[^>]*>([\s\S]*?)<\/span>/) || [])[1]);
-  if (!state) throw new Error('ページを読み取れませんでした');
+  if (!state) throw new Error('ページを読み取れませんでした: ' + strip(html).slice(0, 160));
   const found = !/該当なし/.test(state);
   return { found, status: state.replace(/^[↓⇒→\s]+/, ''), detail: '' };
 }
