@@ -67,14 +67,31 @@ li .meta{color:var(--mute);font-size:13px;flex:1 1 140px}
 li.hit .meta{color:var(--ink)}
 li button,li .linkbtn{padding:4px 10px;min-width:0;font-size:13px}
 #scan{margin-top:10px}
+#scan:empty{display:none}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <main>
-  <h1>送料比較と追跡</h1>
+  <section>
+    <h2>追跡番号</h2>
+    <form class="search" id="trackForm">
+      <input id="trackNo" inputmode="numeric" autocomplete="off" placeholder="追跡番号を入力" aria-label="問い合わせ番号">
+      <button class="primary" id="go" type="submit">調べる</button>
+    </form>
+    <p class="note" id="msg" aria-live="polite">ヤマト・佐川・日本郵便の3社を同時に調べ、記録のある会社を自動で見つけます。</p>
+    <ul id="scan"></ul>
+    <div id="after" hidden>
+    <div class="field"><label for="memo">メモ（宛先など・任意）</label><input id="memo" autocomplete="off" placeholder="例 〇〇商店 11/18発送"></div>
+    <div class="btns" style="margin-top:10px">
+      <button id="save" type="button">履歴に残す</button>
+      <button id="copyInfo" type="button">お客様向け案内文をコピー</button>
+    </div>
+    </div>
+  </section>
 
-  <section class="result" aria-live="polite"><div id="result"></div></section>
+
+  <section class="result" id="resultSection" aria-live="polite" hidden><div id="result"></div></section>
 
   <section>
     <h2>サイズ</h2>
@@ -89,21 +106,6 @@ li button,li .linkbtn{padding:4px 10px;min-width:0;font-size:13px}
   <section id="prefSection">
     <h2>都道府県</h2>
     <div id="prefs"></div>
-  </section>
-
-  <section>
-    <h2>問い合わせ番号（追跡）</h2>
-    <form class="search" id="trackForm">
-      <input id="trackNo" inputmode="numeric" autocomplete="off" placeholder="番号を入力（ハイフンあり・なし可）" aria-label="問い合わせ番号">
-      <button class="primary" id="go" type="submit">調べる</button>
-    </form>
-    <p class="note" id="msg" aria-live="polite">ヤマト・佐川・日本郵便の3社を同時に調べ、記録のある会社を自動で見つけます。</p>
-    <ul id="scan"></ul>
-    <div class="field"><label for="memo">メモ（宛先など・任意）</label><input id="memo" autocomplete="off" placeholder="例 〇〇商店 11/18発送"></div>
-    <div class="btns" style="margin-top:10px">
-      <button id="save" type="button">履歴に残す</button>
-      <button id="copyInfo" type="button">お客様向け案内文をコピー</button>
-    </div>
   </section>
 
   <section>
@@ -148,6 +150,7 @@ const st={size:60,pref:null,carrier:null,scan:null};
 /* ===== 送料比較 ===== */
 function pressBtn(label,on,fn){const b=el("button",{type:"button",textContent:label});b.setAttribute("aria-pressed",on);b.onclick=fn;return b;}
 function resultBox(best,sub,rows){
+  $("resultSection").hidden=!best; if(!best)return;
   const box=[el("div",{className:"best",textContent:best}),el("div",{className:"sub",textContent:sub})];
   if(rows&&rows.length)box.push(el("div",{className:"rows"},rows.map(r=>{
     const d=el("div",{className:"row"+(r.win?" win":"")},[el("div",{textContent:r.name}),el("b",{textContent:r.price==null?"取扱なし":yen(r.price)})]);
@@ -162,7 +165,7 @@ function render(){
   $("dims").hidden=!packet; $("prefSection").hidden=packet;
   if(packet){
     const v=[$("dl").value,$("dw").value,$("dh").value].map(Number);
-    if(v.some(x=>!x)){resultBox("縦・横・厚みを入力","パケット系は全国一律料金です");return;}
+    if(v.some(x=>!x)){resultBox();return;}
     const [a,b,c]=[...v].sort((x,y)=>y-x),sum=a+b+c,ok=[];
     if(a<=34&&b<=25&&c<=3)ok.push("レターパックライト","レターパックプラス","クリックポスト");
     if(a<=32&&b<=23&&c<=3)ok.push("ネコポス");
@@ -174,7 +177,7 @@ function render(){
     resultBox("最安 "+ok[0]+" "+yen(PACKET[ok[0]]),v.join("×")+" cm",ok.map((n,i)=>({name:n,price:PACKET[n],win:i===0})));
     return;
   }
-  if(!st.pref){resultBox("サイズと都道府県を選択","ヤマトと佐川の料金を比べます");return;}
+  if(!st.pref){resultBox();return;}
   const y=price("ヤマト",st.size,st.pref),s=price("佐川",st.size,st.pref);
   if(y==null&&s==null){resultBox("取扱なし",st.size+"サイズ／"+st.pref+" はどちらも料金表にありません");return;}
   const win=y==null?"佐川":s==null?"ヤマト":y<s?"ヤマト":s<y?"佐川":"同額";
@@ -191,7 +194,7 @@ function openBtn(carrier,no,label="公式ページ"){
   return el("a",{className:"linkbtn",textContent:label,href:TRACK_URL[carrier](no),target:"_blank",rel:"noopener"});
 }
 function drawScan(){
-  const s=st.scan; if(!s){$("scan").replaceChildren();return;}
+  const s=st.scan; $("after").hidden=!s; if(!s){$("scan").replaceChildren();return;}
   $("scan").replaceChildren(...CARRIERS.map(c=>{
     const r=s.results?.find(x=>x.carrier===c);
     const text=!s.results?(s.failed?"自動で調べられませんでした":"調べています…"):r?.error?"確認できず（"+r.error+"）":r?.found?[r.status,r.detail].filter(Boolean).join("　"):"記録なし";
